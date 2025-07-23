@@ -264,6 +264,18 @@
             font-size: 0.8rem; /* Smaller font size for table content */
             min-width: 40px; /* Minimum width for numerical columns */
         }
+
+        /* Lebar khusus untuk kolom JUMLAH */
+        /* Menargetkan kolom ke-11 (BUMIL), ke-12 (#BUMIL), dan ke-13 (TOTAL) di baris kedua header dan body */
+        #reportTable thead tr:nth-child(2) th:nth-child(16),
+        #reportTable tbody td:nth-child(15),
+        #reportTable thead tr:nth-child(2) th:nth-child(17),
+        #reportTable tbody td:nth-child(16),
+        #reportTable thead tr:nth-child(2) th:nth-child(18),
+        #reportTable tbody td:nth-child(17) {
+            min-width: 50px; /* Sesuaikan nilai ini sesuai kebutuhan Anda, contoh: 70px */
+        }
+
         th {
             background-color: #e2e8f0; /* gray-200 */
             font-weight: 600;
@@ -406,19 +418,25 @@
 
     /* NEW: Styles for column separators */
     /* Garis setelah kolom TT5 BUMIL (kolom ke-6 di baris kedua header) */
-    #reportTable thead tr:nth-child(2) th:nth-child(5),
-    #reportTable tbody td:nth-child(6) {
+    #reportTable thead th:nth-child(6),
+    #reportTable tbody td:nth-child(7) {
         border-right: 2px solid #60a5fa; /* Blue-400 for separator after BUMIL TT5 */
     }
     /* Garis setelah kolom TT5 #BUMIL (kolom ke-11 di baris kedua header) */
-    #reportTable thead tr:nth-child(2) th:nth-child(10),
-    #reportTable tbody td:nth-child(11) {
+    #reportTable thead th:nth-child(12),
+    #reportTable tbody td:nth-child(13) {
         border-right: 2px solid #60a5fa; /* Blue-400 for separator after #BUMIL TT5 */
+    }
+    /* Garis setelah kolom TL #BUMIL (kolom ke-13 di baris kedua header) */
+    #reportTable thead th:nth-child(15),
+    #reportTable tbody td:nth-child(16) {
+        border-right: 2px solid #60a5fa; /* Blue-400 for separator after TL #BUMIL */
     }
 
     /* Ensure total row also gets these separators */
-    .total-row td:nth-child(6),
-    .total-row td:nth-child(11) {
+    .total-row td:nth-child(7),
+    .total-row td:nth-child(13),
+    .total-row td:nth-child(16) { /* Added TL total row separator */
         border-right: 2px solid #60a5fa; /* Match the separator color */
     }
     /* Pastikan kolom pertama (Bulan/Desa) tetap rata kiri untuk data, tapi header bisa center */
@@ -431,7 +449,7 @@
 <body class="bg-gray-100 text-gray-800">
 
 <!-- Fixed Top Bar (for font size control, logged-in user, and logout) -->
-<div id="topNavBar" class="fixed top-0 left-0 right-0 z-20 bg-white p-2 shadow-md flex items-center justify-between rounded-bl-lg rounded-br-lg">
+<div id="topNavBar" class="fixed top-0 left-0 right-0 z-20 bg-blue-100 p-2 shadow-md flex items-center justify-between rounded-bl-lg rounded-br-lg">
     <div class="flex items-center gap-1">
         <button id="zoomOutBtn" class="font-control-btn" onclick="adjustFontSize(-1)">A-</button>
         <button id="resetZoomBtn" class="font-control-btn" onclick="adjustFontSize(0)">A</button>
@@ -620,17 +638,35 @@
             <section class="bg-gray-50 p-6 mb-8 rounded-lg shadow-inner border border-gray-200">
                 <h2 class="font-semibold text-xl text-gray-700 border-b-2 border-blue-200 pb-3 mt-0 mb-3 md:text-2xl">Catatan Tambahan</h2>
                 <label for="catatan" class="block mb-0 text-gray-700 font-medium">Catatan:</label>
-                <textarea id="catatan" rows="3" class="block w-full p-3 mb-1 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"></textarea>
+                <textarea id="catatan" rows="3" class="block w-full p-3 mb-1 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2                 focus:ring-green-500 focus:border-transparent"></textarea>
             </section>
 
         </form>
 
-        <div id="statusOutput" class="result bg-blue-100 border-l-4 border-blue-500 p-5 rounded-lg mt-8 text-xl font-bold text-blue-700 text-center shadow-md"></div>
-        <!-- Tombol-tombol ini dipindahkan kembali ke dalam formView -->
-        <div class="flex justify-between gap-4 mt-8">
-            <button type="button" id="saveDataButtonForm" class="px-6 py-3 rounded-lg text-white font-medium text-lg cursor-pointer transition-all duration-300 ease-in-out shadow-md hover:shadow-lg hover:translate-y-[-2px] bg-blue-600 hover:bg-blue-700 w-full md:w-auto">Simpan Data</button>
-            <button type="button" id="closeFormBtn" class="px-6 py-3 rounded-lg text-gray-800 font-medium text-lg cursor-pointer transition-all duration-300 ease-in-out shadow-md hover:shadow-lg hover:translate-y-[-2px] bg-gray-300 hover:bg-gray-400 w-full md:w-auto">Tutup</button>
+<div class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-300 shadow-md px-3 py-2 flex items-center justify-between gap-3 max-w-4xl mx-auto">
+    
+    <!-- Tombol Simpan di kiri -->
+    <div>
+        <button type="button" id="saveDataButtonForm" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold shadow-md">
+            Simpan Data
+        </button>
+    </div>
+
+    <!-- STATUS OUTPUT di tengah -->
+    <div class="flex-1 text-center">
+        <div id="statusOutput" class="inline-block bg-orange-600 text-white px-3 py-1 rounded-lg font-bold shadow-md text-sm md:sm">
+            <!-- Akan diisi oleh JavaScript -->
         </div>
+    </div>
+
+    <!-- Tombol Tutup di kanan -->
+    <div>
+        <button type="button" id="closeFormBtn" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-semibold shadow-md">
+            Tutup
+        </button>
+    </div>
+</div>
+
     </div>
 
     <!-- Tampilan Laporan (Awalnya Tersembunyi) -->
@@ -671,22 +707,22 @@
 </div>
 
 <!-- Fixed Main Navigation Bar (Bottom) -->
-<div id="mainNavBar" class="fixed bottom-0 left-0 right-0 z-10 bg-white p-4 shadow-md flex justify-center fixed-bottom-bar">
-    <div class="flex justify-around gap-2 w-full max-w-4xl">
-        <!-- START: Tombol menu tanpa label teks -->
-        <button id="navShowListBtn" class="nav-button bg-blue-600 hover:bg-blue-700">
-            <i class="fas fa-list"></i>
-            <!-- <span>Daftar</span> -->
+<div id="mainNavBar" class="fixed bottom-0 left-0 right-0 z-10 bg-blue-100 border-t border-gray-200 shadow-md px-2 py-1">
+    <div class="flex justify-around items-center max-w-4xl mx-auto">
+        <!-- START: Tombol menu -->
+        <button id="navShowListBtn" class="flex flex-col items-center justify-center px-2 py-1 text-[11px] text-white hover:text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-all duration-200">
+            <i class="fas fa-list text-base mb-0"></i>
+            Register
         </button>
-        <button id="navShowReportBtn" class="nav-button bg-purple-600 hover:bg-purple-700">
-            <i class="fas fa-chart-bar"></i>
-            <!-- <span>Laporan</span> -->
+        <button id="navShowReportBtn" class="flex flex-col items-center justify-center px-2 py-1 text-[11px] text-white hover:text-white bg-purple-500 hover:bg-purple-600 rounded-md transition-all duration-200">
+            <i class="fas fa-chart-bar text-base mb-0"></i>
+            Laporan
         </button>
-        <button id="navShowFormBtn" class="nav-button bg-green-600 hover:bg-green-700">
-            <i class="fas fa-plus-circle"></i>
-            <!-- <span>Tambah</span> -->
+        <button id="navShowFormBtn" class="flex flex-col items-center justify-center px-2 py-1 text-[11px] text-white hover:text-white bg-green-500 hover:bg-green-600 rounded-md transition-all duration-200">
+            <i class="fas fa-plus-circle text-base mb-0"></i>
+            Tambah
         </button>
-        <!-- END: Tombol menu tanpa label teks -->
+        <!-- END: Tombol menu -->
     </div>
 </div>
 
@@ -706,7 +742,7 @@
 <!-- Full Detail Modal -->
 <div id="fullDetailModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto modal-content">
-        <h3 class="text-2xl font-semibold text-blue-800 mb-4 text-center">Detail Riwayat Imunisasi TT</h3>
+        <h3 class="text-2xl font-semibold text-blue-800 mb-4 text-center">Riwayat Imunisasi TT</h3>
         
         <section class="bg-gray-50 p-4 mb-4 rounded-lg shadow-inner border border-gray-200">
             <h4 class="font-semibold text-lg text-gray-700 border-b-2 border-blue-200 pb-2 mb-3">Identitas</h4>
@@ -722,26 +758,35 @@
 
         <section class="bg-gray-50 p-4 mb-4 rounded-lg shadow-inner border border-gray-200">
             <h4 class="font-semibold text-lg text-gray-700 border-b-2 border-blue-200 pb-2 mb-3">Status Imunisasi TT</h4>
-            <p class="text-xl font-bold text-blue-700 mb-2">Status TT Terakhir: <span id="detailStatusTt" class="font-medium"></span></p>
-            <p class="text-lg text-blue-600 mb-4">Jadwal TT Berikutnya: <span id="detailJadwalDosisBerikutnya" class="font-medium"></span></p>
-            
+                    
             <h5 class="font-semibold text-base text-gray-700 mb-2">Riwayat Dosis TT Diberikan:</h5>
             <ul id="detailDosesList" class="list-disc list-inside text-gray-700 space-y-1">
                 <!-- Doses will be listed here -->
             </ul>
+            <p class="text-base font-semibold text-blue-800 mt-4">Status TT Terakhir: <span id="detailStatusTt" class="font-medium"></span></p>
+            <p class="text-base text-blue-800 mb-2">Jadwal TT Berikutnya: <span id="detailJadwalDosisBerikutnya" class="font-medium"></span></p>
+
         </section>
 
         <section class="bg-gray-50 p-4 mb-6 rounded-lg shadow-inner border border-gray-200">
             <h4 class="font-semibold text-lg text-gray-700 border-b-2 border-blue-200 pb-2 mb-3">Catatan Tambahan</h4>
             <p id="detailCatatan" class="text-gray-700 whitespace-pre-wrap">Tidak ada catatan.</p>
         </section>
-
-        <div class="flex justify-end gap-3">
-            <button id="deleteFromFullModalBtn" class="px-5 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">Hapus</button>
-            <button id="editFromFullModalBtn" class="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">Edit</button>
-            <button onclick="closeFullDetailModal()" class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">Tutup</button>
-        </div>
     </div>
+<div class="fixed bottom-0 left-0 right-0 z-40 bg-white shadow-md border-t border-gray-300 px-4 py-3 flex justify-between max-w-2xl mx-auto">
+    <!-- Tombol kiri: Hapus -->
+    <div>
+        <button id="deleteFromFullModalBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md">Hapus</button>
+    </div>
+
+    <!-- Tombol kanan: Edit dan Tutup -->
+    <div class="flex gap-3">
+        <button id="editFromFullModalBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">Edit</button>
+        <button onclick="closeFullDetailModal()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md">Tutup</button>
+    </div>
+</div>
+
+
 </div>
 
 <!-- Custom Confirmation Modal for Delete -->
@@ -1234,7 +1279,7 @@
     // Fungsi utama untuk menghitung status imunisasi TT
     function hitungStatusTT() {
         const output = document.getElementById("statusOutput");
-        
+                
         const nik = document.getElementById("nik").value.trim();
         const nama = document.getElementById("nama").value.trim();
         const desaKelurahan = document.getElementById("desaKelurahan").value.trim();
@@ -1298,18 +1343,16 @@
         // Combine all doses and sort them chronologically
         const allDoses = [...childhoodDoses, ...otherDoses].sort((a, b) => a.date - b.date);
 
-        const validDoses = []; // Will store objects {date: Date, source: string} for valid doses
+        const validDoses = []; // Will store objects {date: Date, source: string} for valid T1-T5 doses
+        const tlVisits = []; // Will store objects {date: Date, source: string} for TL visits
 
+        // First, process T1-T5 doses with interval rules
         for (let i = 0; i < allDoses.length; i++) {
             const currentDose = allDoses[i];
             let prevDoseDate = null;
 
             if (validDoses.length > 0) {
                 prevDoseDate = validDoses[validDoses.length - 1].date;
-            } else {
-                // For the very first dose, no previous date is needed for interval check
-                validDoses.push(currentDose);
-                continue;
             }
 
             const statusSekarang = validDoses.length + 1; // This is the status *after* adding the current dose
@@ -1323,17 +1366,51 @@
                 minimalInterval = 365; // 1 year
             }
 
-            const jarakHari = Math.floor((currentDose.date - prevDoseDate) / (1000 * 60 * 60 * 24));
+            const jarakHari = prevDoseDate ? Math.floor((currentDose.date - prevDoseDate) / (1000 * 60 * 60 * 24)) : 0;
 
-            if (currentDose.date.toString() !== 'Invalid Date' && jarakHari >= minimalInterval) {
-                validDoses.push(currentDose);
+            if (currentDose.date.toString() !== 'Invalid Date') {
+                if (validDoses.length < 5) { // Still accumulating T1-T5
+                    if (validDoses.length === 0 || jarakHari >= minimalInterval) {
+                        validDoses.push(currentDose);
+                    } else {
+                        // If interval is not met, this is an invalid dose for T1-T5 sequence,
+                        // but it might be a valid TL visit if status is already T5.
+                        // For now, we skip invalid T1-T5 doses.
+                        console.warn(`[hitungStatusTT] Dosis tidak valid untuk T${statusSekarang} karena interval tidak terpenuhi:`, currentDose);
+                    }
+                } else { // Status is already T5 (validDoses.length is 5)
+                    // This is a follow-up visit after T5, record as TL
+                    let tlSource = currentDose.source;
+                    if (tlSource.startsWith('Hamil anak ke-')) {
+                        tlSource = `TL (${tlSource})`;
+                    } else if (tlSource.startsWith('Lainnya')) {
+                        tlSource = `TL (${tlSource})`;
+                    } else if (tlSource.startsWith('Catin')) {
+                        // Catin doses typically lead to T1/T2. If T5 is already reached,
+                        // a Catin entry would be unusual, but we'll record it as TL.
+                        tlSource = `TL (${tlSource})`;
+                    } else {
+                        // DPT/Kelas doses typically lead to T1-T4. If T5 is already reached,
+                        // these entries would be unusual, but we'll record them as TL.
+                        tlSource = `TL (Kunjungan Ulang)`; // Generic TL for unexpected sources after T5
+                    }
+                    tlVisits.push({ date: currentDose.date, source: tlSource });
+                }
             }
         }
-        console.log("[hitungStatusTT] Valid Doses:", validDoses); // Log valid doses
+        
+        console.log("[hitungStatusTT] Valid T1-T5 Doses:", validDoses);
+        console.log("[hitungStatusTT] TL Visits:", tlVisits);
 
         let statusT = validDoses.length;
+        let displayStatusTt = `T${statusT}`; // Default display status
         let nextDoseScheduleForDisplay = ""; // For display in the form output
         let nextDoseScheduleForStorage = ""; // For storage and WhatsApp message
+
+        // Check if the current tanggalLayanan corresponds to a TL visit
+        const isCurrentVisitTL = tlVisits.some(visit => 
+            formatDateToYYYYMMDD(visit.date) === tanggalLayananStr // Compare formatted dates
+        );
 
         if (statusT === 0) {
             const nextDoseDate = new Date();
@@ -1342,25 +1419,36 @@
             output.innerHTML = "<strong>Status TT: T0</strong>";
             output.innerHTML += "<br>Jadwal dosis berikutnya: <strong>" + nextDoseScheduleForDisplay + "</strong>";
         } else {
-            output.innerHTML = "<strong>Status TT: T" + statusT + "</strong>";
-
-            if (statusT < 5) {
-                const terakhir = validDoses[validDoses.length - 1].date;
-                const next = new Date(terakhir);
-
-                if (statusT === 1) next.setMonth(next.getMonth() + 1);
-                else if (statusT === 2) next.setMonth(next.getMonth() + 6);
-                else next.setFullYear(next.getFullYear() + 1);
-                
-                nextDoseScheduleForDisplay = next.toLocaleDateString("id-ID", optionsLong);
-                nextDoseScheduleForStorage = next.toISOString().split('T')[0]; // YYYY-MM-DD
-                output.innerHTML += "<br>Jadwal dosis berikutnya: <strong>" + nextDoseScheduleForDisplay + "</strong>";
-            } else {
-                nextDoseScheduleForDisplay = "Imunisasi TT lengkap (T5)";
-                nextDoseScheduleForStorage = "Imunisasi TT lengkap (T5)"; // Store as string
+            // If T5 is achieved AND this is a TL visit (current tanggalLayanan is a TL entry)
+            if (statusT === 5 && isCurrentVisitTL) {
+                displayStatusTt = "TL"; // Set status to TL
+                nextDoseScheduleForDisplay = "Imunisasi TT lengkap (TL)";
+                nextDoseScheduleForStorage = "Imunisasi TT lengkap (TL)";
+                output.innerHTML = "<strong>Status TT: TL</strong>"; // Display TL
                 output.innerHTML += "<br><em>" + nextDoseScheduleForDisplay + "</em>";
+            } else { // Normal T1-T5 calculation or T5 without a new TL visit
+                output.innerHTML = "<strong>Status TT: T" + statusT + "</strong>";
+                if (statusT < 5) {
+                    const terakhir = validDoses[validDoses.length - 1].date;
+                    const next = new Date(terakhir);
+
+                    if (statusT === 1) next.setMonth(next.getMonth() + 1);
+                    else if (statusT === 2) next.setMonth(next.getMonth() + 6);
+                    else next.setFullYear(next.getFullYear() + 1);
+                    
+                    nextDoseScheduleForDisplay = next.toLocaleDateString("id-ID", optionsLong);
+                    nextDoseScheduleForStorage = next.toISOString().split('T')[0]; // YYYY-MM-DD
+                    output.innerHTML += "<br>Jadwal dosis berikutnya: <strong>" + nextDoseScheduleForDisplay + "</strong>";
+                } else { // statusT === 5, but not a new TL visit
+                    nextDoseScheduleForDisplay = "Imunisasi TT lengkap (T5)";
+                    nextDoseScheduleForStorage = "Imunisasi TT lengkap (T5)"; // Store as string
+                    output.innerHTML += "<br><em>" + nextDoseScheduleForDisplay + "</em>";
+                }
             }
         }
+
+        // Combine valid T1-T5 doses and TL visits for storage in ttDosesDetails
+        const allDosesForStorage = [...validDoses, ...tlVisits].sort((a, b) => a.date - b.date);
 
         // Siapkan data untuk disimpan ke Google Sheets
         let dataToSave = {
@@ -1372,9 +1460,9 @@
             tanggalLahir: tanggalLahirInput, // Store as YYYY-MM-DD for consistency
             umur: umur, // Now years and months
             tanggalLayanan: tanggalLayananStr, // Store as YYYY-MM-DD for consistency
-            statusTt: `T${statusT}`,
+            statusTt: displayStatusTt, // Use the determined displayStatusTt
             jadwalDosisBerikutnya: nextDoseScheduleForStorage, // Store in YYYY-MM-DD or static string
-            ttDosesDetails: JSON.stringify(validDoses.map(d => ({
+            ttDosesDetails: JSON.stringify(allDosesForStorage.map(d => ({
                 date: d.date.toISOString().split('T')[0], // Format YYYY-MM-DD for storage consistency
                 source: d.source
             }))), // Stringify the array for sending to Google Sheets
@@ -1389,7 +1477,7 @@
         let messageParts = [];
         const puskesmasName = "*Puskesmas Lawawoi*";
 
-        if (!nama && !alamat && !tanggalLahirInput && !noHp && validDoses.length === 0) {
+        if (!nama && !alamat && !tanggalLahirInput && !noHp && validDoses.length === 0 && tlVisits.length === 0) {
             messageParts.push("Halo! 👋");
             messageParts.push("Terima kasih telah menggunakan layanan skrining imunisasi TT Puskesmas Lawawoi.");
             messageParts.push("Saat ini, data Anda masih kosong.");
@@ -1407,10 +1495,12 @@
             messageParts.push(`Alamat: *${alamat || '-'}*`);
             messageParts.push(`\nTerima kasih telah menggunakan layanan skrining imunisasi TT Puskesmas Lawawoi *tanggal ${formattedTanggalLayanan}*:`);
 
-            if (statusT < 5) {
+            if (displayStatusTt === "TL") { // Check for TL status
+                messageParts.push(`- *Status imunisasi TT* Anda sudah *lengkap (TL)*. 🎉`);
+            } else if (statusT < 5) {
                 messageParts.push(`- *Status TT* saat ini adalah *T${statusT}* ✨`);
                 messageParts.push(`- *Jadwal imunisasi berikutnya* adalah *${nextDoseScheduleForDisplay}* 🗓️`); // Use display format for WhatsApp
-            } else {
+            } else { // statusT === 5, but not a TL visit (e.g., first time reaching T5)
                 messageParts.push(`- *Status imunisasi TT* Anda sudah *lengkap (T5)*. 🎉`);
             }
             
@@ -1658,7 +1748,7 @@
             showCustomAlert("Gagal memuat data dari Google Sheets. Pastikan Anda online dan URL Web App sudah benar.");
             return [];
         } finally {
-            hideLoading(); // Hide loading animation
+            hideLoading();
         }
     }
 
@@ -1690,23 +1780,28 @@
 
             // Determine text color for Tanggal Layanan (Status TT)
             let statusTextColorClass = 'text-blue-800'; // Default to dark blue
-            const currentTtStatusNum = parseInt(item.statusTt ? item.statusTt.replace('T', '') : '0');
+            const currentTtStatus = item.statusTt || 'T0'; // Get the string statusTt
 
-            if (currentTtStatusNum === 5) {
+            if (currentTtStatus === 'T5') {
                 statusTextColorClass = 'text-green-700'; // Complete
-            } else if (currentTtStatusNum < 5) {
-                let nextScheduleDate = null;
-                if (item.jadwalDosisBerikutnya && item.jadwalDosisBerikutnya !== "Imunisasi TT lengkap (T5)") {
-                    try {
-                        nextScheduleDate = new Date(item.jadwalDosisBerikutnya);
-                        nextScheduleDate.setHours(0, 0, 0, 0); // Reset time for comparison
-                    } catch (e) {
-                        console.error("Invalid nextScheduleDate:", item.jadwalDosisBerikutnya, e);
-                        nextScheduleDate = null;
+            } else if (currentTtStatus === 'TL') { // New condition for TL
+                statusTextColorClass = 'text-purple-700'; // Purple for TL
+            } else { // For T0-T4, check for overdue
+                const currentTtStatusNum = parseInt(currentTtStatus.replace('T', ''));
+                if (currentTtStatusNum < 5) {
+                    let nextScheduleDate = null;
+                    if (item.jadwalDosisBerikutnya && item.jadwalDosisBerikutnya !== "Imunisasi TT lengkap (T5)") {
+                        try {
+                            nextScheduleDate = new Date(item.jadwalDosisBerikutnya);
+                            nextScheduleDate.setHours(0, 0, 0, 0); // Reset time for comparison
+                        } catch (e) {
+                            console.error("Invalid nextScheduleDate:", item.jadwalDosisBerikutnya, e);
+                            nextScheduleDate = null;
+                        }
                     }
-                }
-                if (nextScheduleDate && nextScheduleDate <= today) {
-                    boxClass = 'bg-yellow-500 text-white'; // Kuning jika jatuh tempo/terlambat
+                    if (nextScheduleDate && nextScheduleDate <= today) {
+                        statusTextColorClass = 'text-yellow-700'; // Kuning jika jatuh tempo/terlambat
+                    }
                 }
             }
 
@@ -1758,8 +1853,9 @@
                 }
             }
 
-            // Create a Set of given dose indices for quick lookup
-            const givenDoses = new Set(dosesArray.map((d, idx) => idx + 1));
+            // Create a Set of given dose indices for quick lookup (excluding TL)
+            const givenDoses = new Set(dosesArray.filter(d => !d.source.startsWith('TL')).map((d, idx) => idx + 1));
+            const hasTL = dosesArray.some(d => d.source.startsWith('TL'));
 
             for (let i = 1; i <= 5; i++) {
                 let boxClass = 'bg-gray-200'; // Default: grey
@@ -1767,10 +1863,10 @@
 
                 if (givenDoses.has(i)) { // Jika dosis ini sudah diberikan
                     boxClass = 'bg-green-500 text-white'; // Hijau untuk dosis yang sudah diberikan
-                } else if (i === currentTtStatusNum + 1 && currentTtStatusNum < 5) {
-                    // Ini adalah dosis berikutnya yang diharapkan, periksa apakah sudah jatuh tempo
+                } else if (item.statusTt === `T${i}`) { // If this is the current status (e.g., T3 is current, so T4 is next)
+                    // This is the next expected dose, check if it's overdue
                     let nextScheduleDate = null;
-                    if (item.jadwalDosisBerikutnya && item.jadwalDosisBerikutnya !== "Imunisasi TT lengkap (T5)") {
+                    if (item.jadwalDosisBerikutnya && item.jadwalDosisBerikutnya !== "Imunisasi TT lengkap (T5)" && item.jadwalDosisBerikutnya !== "Imunisasi TT lengkap (TL)") {
                         try {
                             nextScheduleDate = new Date(item.jadwalDosisBerikutnya);
                             nextScheduleDate.setHours(0, 0, 0, 0); // Reset time for comparison
@@ -1785,6 +1881,11 @@
                 }
                 ttBoxesHtml += `<div class="tt-box ${boxClass}">${boxText}</div>`;
             }
+            // Add TL box if applicable
+            if (hasTL) {
+                ttBoxesHtml += `<div class="tt-box bg-purple-500 text-white">TL</div>`;
+            }
+
 
             let statusBadgeHtml = '';
             if (!isSynced) { // Hanya tampilkan badge jika belum tersinkronisasi
@@ -1808,7 +1909,7 @@
                     if (formattedNoHpForLink.startsWith('0')) {
                         formattedNoHpForLink = '62' + formattedNoHpForLink.substring(1);
                     } else if (!formattedNoHpForLink.startsWith('62')) {
-                        formattedNoHpForLink = '62' + formattedNoHpForLink;
+                        formattedNoHpForLink = '62' + formattedNoHp;
                     }
                 }
             }
@@ -2211,7 +2312,10 @@
         document.getElementById('detailStatusTt').innerText = item.statusTt || '-';
         
         let displayJadwalDosisBerikutnya = item.jadwalDosisBerikutnya || '-';
-        if (item.jadwalDosisBerikutnya && item.jadwalDosisBerikutnya !== "Imunisasi TT lengkap (T5)") {
+        // If status is TL, display "Imunisasi TT lengkap (TL)"
+        if (item.statusTt === "TL") {
+            displayJadwalDosisBerikutnya = "Imunisasi TT lengkap (TL)";
+        } else if (item.jadwalDosisBerikutnya && item.jadwalDosisBerikutnya !== "Imunisasi TT lengkap (T5)") {
             const dateObj = new Date(item.jadwalDosisBerikutnya);
             if (!isNaN(dateObj)) {
                 displayJadwalDosisBerikutnya = dateObj.toLocaleDateString("id-ID", optionsLong);
@@ -2233,24 +2337,30 @@
             }
         }
 
-        if (dosesArray.length > 0) {
-            dosesArray.forEach(dose => {
-                const li = document.createElement('li');
-                let doseDate = dose.date || '-';
-                if (dose.date && typeof dose.date === 'string') {
-                    const dateObj = new Date(dose.date);
-                    if (!isNaN(dateObj)) {
-                        doseDate = dateObj.toLocaleDateString("id-ID", optionsLong);
-                    }
-                }
-                li.innerText = `${doseDate} - ${dose.source || 'Tidak Diketahui'}`;
-                dosesList.appendChild(li);
-            });
-        } else {
-            const li = document.createElement('li');
-            li.innerText = 'Belum ada dosis TT yang diberikan.';
-            dosesList.appendChild(li);
+if (dosesArray.length > 0) {
+    dosesArray.forEach((dose, index) => {
+        const li = document.createElement('li');
+        let doseDate = dose.date || '-';
+        if (dose.date && typeof dose.date === 'string') {
+            const dateObj = new Date(dose.date);
+            if (!isNaN(dateObj)) {
+                doseDate = dateObj.toLocaleDateString("id-ID", optionsLong);
+            }
         }
+
+        // Format label TT1, TT2, ..., TL
+        let label;
+        if ((dose.source || '').toUpperCase().includes('TL')) {
+            label = 'TL';
+        } else {
+            label = `TT${index + 1}`;
+        }
+
+        li.innerText = `${label} : ${doseDate} - ${dose.source || 'Tidak Diketahui'}`;
+        dosesList.appendChild(li);
+    });
+}
+
 
         document.getElementById('detailCatatan').innerText = item.catatan || 'Tidak ada catatan.';
 
@@ -2290,7 +2400,7 @@
         monthFilter.innerHTML = '';
         yearFilter.innerHTML = '';
 
-        // Populate years from current year - 5 to current year + 1
+        // Populate years for the last 5 years up to current year + 1
         const currentYear = new Date().getFullYear();
         for (let year = currentYear - 5; year <= currentYear + 1; year++) {
             const option = document.createElement('option');
@@ -2326,6 +2436,7 @@
 
     // Generate report table
     async function generateReport() {
+        console.log("[generateReport] Function called.");
         if (!currentUserDesa) {
             showCustomAlert('Silahkan login untuk melihat laporan.');
             return;
@@ -2333,6 +2444,7 @@
 
         const selectedMonth = document.getElementById('monthFilter').value;
         const selectedYear = document.getElementById('yearFilter').value;
+        console.log(`[generateReport] Filters: Month=${selectedMonth}, Year=${selectedYear}`);
         
         const reportTableBody = document.getElementById('reportTableBody');
         const reportTableHeader = document.getElementById('reportTableHeader');
@@ -2343,24 +2455,27 @@
         try {
             // Ensure allImunisasiData is loaded before generating report
             if (allImunisasiData.length === 0) {
+                console.log("[generateReport] allImunisasiData is empty, calling loadAndRenderData().");
                 await loadAndRenderData(); 
+            } else {
+                console.log("[generateReport] allImunisasiData already loaded.");
             }
 
-            let dataForReport = allImunisasiData.filter(item => {
-                const itemDate = new Date(item.tanggalLayanan);
-                const itemYear = itemDate.getFullYear().toString();
-                const itemMonth = (itemDate.getMonth() + 1).toString().padStart(2, '0');
-
-                const matchesYear = selectedYear ? (itemYear === selectedYear) : true;
-                
-                // Admin-specific month filter
-                const matchesMonthAdmin = (currentUserDesa === "AdminPuskesmas" && selectedMonth) ? (itemMonth === selectedMonth) : true;
-
-                // User-specific desa filter (always matches their own desa)
-                const matchesDesaUser = (currentUserDesa !== "AdminPuskesmas") ? (String(item.desaKelurahan) === String(currentUserDesa)) : true; // Ensure string comparison
-
-                return matchesYear && matchesDesaUser && matchesMonthAdmin; 
-            });
+            // --- START: MODIFIED FILTERING LOGIC ---
+            // Initial data for report:
+            // Admin: all data
+            // User: only data for their desa
+            let dataForReport = [];
+            if (currentUserDesa === "AdminPuskesmas") {
+                dataForReport = [...allImunisasiData];
+                console.log("[generateReport] Admin mode: All data selected for initial processing.");
+            } else {
+                dataForReport = allImunisasiData.filter(item => 
+                    String(item.desaKelurahan) === String(currentUserDesa)
+                );
+                console.log(`[generateReport] User mode (${currentUserDesa}): Data filtered by desa for initial processing. Count: ${dataForReport.length}`);
+            }
+            // --- END: MODIFIED FILTERING LOGIC ---
 
             reportTableBody.innerHTML = ''; // Clear existing rows
 
@@ -2373,14 +2488,14 @@
             }
 
             // Define common headers for TT1-TT5, Bumil/NonBumil, and total columns
-            const ttHeaders = ['TT1', 'TT2', 'TT3', 'TT4', 'TT5'];
+            const ttHeaders = ['TT1', 'TT2', 'TT3', 'TT4', 'TT5', 'TL']; // Added 'TL'
             
             // New header structure
             let headerHtml = `
                 <tr>
                     <th rowspan="2" scope="col" class="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider sticky-col">${firstColumnHeaderText}</th>
-                    <th colspan="5" scope="col" class="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">BUMIL</th>
-                    <th colspan="5" scope="col" class="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">#BUMIL</th>
+                    <th colspan="6" scope="col" class="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">BUMIL</th>
+                    <th colspan="6" scope="col" class="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">#BUMIL</th>
                     <th colspan="3" scope="col" class="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JUMLAH</th>
                 </tr>
                 <tr>
@@ -2406,13 +2521,14 @@
                 TT3_Bumil: 0, TT3_NonBumil: 0,
                 TT4_Bumil: 0, TT4_NonBumil: 0,
                 TT5_Bumil: 0, TT5_NonBumil: 0,
-                sumIbuHamil: 0, // Sum of monthly/desa Ibu Hamil counts
-                sumHashHamil: 0, // Sum of monthly/desa #Hamil counts
-                sumTotal: 0 // Sum of monthly/desa Total counts
+                TL_Bumil: 0, TL_NonBumil: 0, // Added TL totals
+                sumIbuHamil: 0, 
+                sumHashHamil: 0, 
+                sumTotal: 0 
             };
 
             if (currentUserDesa === "AdminPuskesmas") {
-                // Admin Report: Filter by Month, Year. Group by Desa.
+                // Admin Report: Group by Desa. Filter by selectedMonth and selectedYear for doses.
                 const aggregatedDataByDesa = {};
 
                 dataForReport.forEach(item => {
@@ -2424,9 +2540,9 @@
                             TT3_Bumil: 0, TT3_NonBumil: 0,
                             TT4_Bumil: 0, TT4_NonBumil: 0,
                             TT5_Bumil: 0, TT5_NonBumil: 0,
-                            // These will now sum doses, not unique NIKs
-                            totalDosesBumil: 0, // Sum of TT1-TT5 Bumil doses for this desa
-                            totalDosesNonBumil: 0 // Sum of TT1-TT5 NonBumil doses for this desa
+                            TL_Bumil: 0, TL_NonBumil: 0, // Added TL counts
+                            totalDosesBumil: 0, 
+                            totalDosesNonBumil: 0 
                         };
                     }
 
@@ -2437,26 +2553,55 @@
                         try {
                             dosesArray = JSON.parse(item.ttDosesDetails);
                         } catch (e) {
-                            console.warn("Error parsing ttDosesDetails for report aggregation:", item.ttDosesDetails, e);
+                            console.warn(`[generateReport-Admin] Error parsing ttDosesDetails for item ${item.uniqueId}:`, item.ttDosesDetails, e);
                         }
                     }
+                    console.log(`[generateReport-Admin] Processing item ${item.uniqueId}, Desa: ${desa}, Doses:`, dosesArray);
 
                     dosesArray.forEach((dose, index) => {
+                        // Ensure dose.date exists and is a valid date string
+                        if (!dose.date || typeof dose.date !== 'string') {
+                            console.warn(`[generateReport-Admin] Skipping dose due to invalid date:`, dose);
+                            return;
+                        }
                         const doseDate = new Date(dose.date);
+                        if (isNaN(doseDate.getTime())) {
+                            console.warn(`[generateReport-Admin] Skipping dose due to unparseable date:`, dose.date);
+                            return;
+                        }
                         const doseMonth = (doseDate.getMonth() + 1).toString().padStart(2, '0');
                         const doseYear = doseDate.getFullYear().toString();
 
-                        if ((!selectedMonth || doseMonth === selectedMonth) && (!selectedYear || doseYear === selectedYear)) {
-                            const ttNumber = index + 1;
-                            if (ttNumber >= 1 && ttNumber <= 5) {
-                                if (dose.source.startsWith('Hamil anak ke-')) {
-                                    // Count doses for TTx_Bumil
-                                    aggregatedDataByDesa[desa][`TT${ttNumber}_Bumil`]++;
-                                    aggregatedDataByDesa[desa].totalDosesBumil++; // Sum all doses for "Ibu Hamil" column
+                        // Apply month and year filter to the dose date itself
+                        const isDoseInSelectedPeriod = 
+                            (!selectedMonth || doseMonth === selectedMonth) && 
+                            (!selectedYear || doseYear === selectedYear);
+
+                        if (isDoseInSelectedPeriod) {
+                            if (dose.source.startsWith('TL')) { // Handle TL status
+                                if (dose.source.includes('Hamil')) { // Check if TL is for a pregnant woman
+                                    aggregatedDataByDesa[desa].TL_Bumil++;
+                                    aggregatedDataByDesa[desa].totalDosesBumil++; // Include TL in total Bumil count
                                 } else {
-                                    // Count doses for TTx_NonBumil
-                                    aggregatedDataByDesa[desa][`TT${ttNumber}_NonBumil`]++;
-                                    aggregatedDataByDesa[desa].totalDosesNonBumil++; // Sum all doses for "#Hamil" column
+                                    aggregatedDataByDesa[desa].TL_NonBumil++;
+                                    aggregatedDataByDesa[desa].totalDosesNonBumil++; // Include TL in total NonBumil count
+                                }
+                                console.log(`[generateReport-Admin] Counted TL for ${desa}. Current Bumil: ${aggregatedDataByDesa[desa].TL_Bumil}, NonBumil: ${aggregatedDataByDesa[desa].TL_NonBumil}`);
+                            } else { // Handle TT1-TT5
+                                // Only count if the item's statusTt is not TL, or if it's a T5 and this is the 5th dose.
+                                // This prevents double-counting T5 if a TL entry exists for the same item.
+                                // The report counts based on the dose itself, not the item's overall status.
+                                const ttNumber = index + 1; // TT1, TT2, etc. based on array index
+                                if (ttNumber >= 1 && ttNumber <= 5) {
+                                    if (dose.source.startsWith('Hamil anak ke-')) {
+                                        aggregatedDataByDesa[desa][`TT${ttNumber}_Bumil`]++;
+                                        aggregatedDataByDesa[desa].totalDosesBumil++; 
+                                        console.log(`[generateReport-Admin] Counted TT${ttNumber}_Bumil for ${desa}. Current:`, aggregatedDataByDesa[desa][`TT${ttNumber}_Bumil`]);
+                                    } else {
+                                        aggregatedDataByDesa[desa][`TT${ttNumber}_NonBumil`]++;
+                                        aggregatedDataByDesa[desa].totalDosesNonBumil++; 
+                                        console.log(`[generateReport-Admin] Counted TT${ttNumber}_NonBumil for ${desa}. Current:`, aggregatedDataByDesa[desa][`TT${ttNumber}_NonBumil`]);
+                                    }
                                 }
                             }
                         }
@@ -2464,20 +2609,21 @@
                 });
 
                 const sortedDesasToDisplay = Object.keys(aggregatedDataByDesa).sort();
+                console.log("[generateReport-Admin] Aggregated data by desa:", aggregatedDataByDesa);
 
                 if (sortedDesasToDisplay.length > 0) {
                     sortedDesasToDisplay.forEach(desa => {
                         const data = aggregatedDataByDesa[desa];
                         const row = reportTableBody.insertRow();
                         let rowHtml = `<td class="px-2 py-1 whitespace-nowrap sticky-col">${desa}</td>`;
-                        ttHeaders.forEach(tt => {
+                        ttHeaders.forEach(tt => { // Loop through TT1-TT5, TL
                             rowHtml += `<td class="px-2 py-1 whitespace-nowrap">${data[`${tt}_Bumil`]}</td>`;
                         });
-                        ttHeaders.forEach(tt => {
+                        ttHeaders.forEach(tt => { // Loop through TT1-TT5, TL
                             rowHtml += `<td class="px-2 py-1 whitespace-nowrap">${data[`${tt}_NonBumil`]}</td>`;
                         });
-                        rowHtml += `<td class="px-2 py-1 whitespace-nowrap">${data.totalDosesBumil}</td>`; // Display sum of doses
-                        rowHtml += `<td class="px-2 py-1 whitespace-nowrap">${data.totalDosesNonBumil}</td>`; // Display sum of doses
+                        rowHtml += `<td class="px-2 py-1 whitespace-nowrap">${data.totalDosesBumil}</td>`; 
+                        rowHtml += `<td class="px-2 py-1 whitespace-nowrap">${data.totalDosesNonBumil}</td>`; 
                         rowHtml += `<td class="px-2 py-1 whitespace-nowrap">${data.totalDosesBumil + data.totalDosesNonBumil}</td>`;
                         row.innerHTML = rowHtml;
 
@@ -2487,9 +2633,10 @@
                         grandTotals.TT3_Bumil += data.TT3_Bumil; grandTotals.TT3_NonBumil += data.TT3_NonBumil;
                         grandTotals.TT4_Bumil += data.TT4_Bumil; grandTotals.TT4_NonBumil += data.TT4_NonBumil;
                         grandTotals.TT5_Bumil += data.TT5_Bumil; grandTotals.TT5_NonBumil += data.TT5_NonBumil;
-                        grandTotals.sumIbuHamil += data.totalDosesBumil; // Sum the displayed "Ibu Hamil" values
-                        grandTotals.sumHashHamil += data.totalDosesNonBumil; // Sum the displayed "#Hamil" values
-                        grandTotals.sumTotal += (data.totalDosesBumil + data.totalDosesNonBumil); // Sum the displayed "Total" values
+                        grandTotals.TL_Bumil += data.TL_Bumil; grandTotals.TL_NonBumil += data.TL_NonBumil; // Sum TL
+                        grandTotals.sumIbuHamil += data.totalDosesBumil; 
+                        grandTotals.sumHashHamil += data.totalDosesNonBumil; 
+                        grandTotals.sumTotal += (data.totalDosesBumil + data.totalDosesNonBumil); 
                     });
 
                     const totalRow = reportTableBody.insertRow();
@@ -2505,12 +2652,13 @@
                     totalRowHtml += `<td class="px-2 py-1 whitespace-nowrap">${grandTotals.sumHashHamil}</td>`;
                     totalRowHtml += `<td class="px-2 py-1 whitespace-nowrap">${grandTotals.sumTotal}</td>`;
                     totalRow.innerHTML = totalRowHtml;
+
                 } else {
                     reportTableBody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-gray-500">Tidak ada data untuk laporan ini pada bulan dan tahun terpilih.</td></tr>`;
                 }
 
             } else {
-                // User Report: Filter by Year and current Desa. Group by Month.
+                // User Report: Group by Month. Filter by selectedYear and currentUserDesa for doses.
                 const aggregatedDataByMonth = {};
                 const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
@@ -2524,15 +2672,19 @@
                         TT3_Bumil: 0, TT3_NonBumil: 0,
                         TT4_Bumil: 0, TT4_NonBumil: 0,
                         TT5_Bumil: 0, TT5_NonBumil: 0,
-                        // These will now sum doses, not unique NIKs
-                        totalDosesBumil: 0, // Sum of TT1-TT5 Bumil doses for this month
-                        totalDosesNonBumil: 0 // Sum of TT1-TT5 NonBumil doses for this month
+                        TL_Bumil: 0, TL_NonBumil: 0, // Added TL counts
+                        totalDosesBumil: 0, 
+                        totalDosesNonBumil: 0 
                     };
                 });
+                console.log("[generateReport-User] Initialized aggregatedDataByMonth:", aggregatedDataByMonth);
 
                 dataForReport.forEach(item => {
-                    const itemDate = new Date(item.tanggalLayanan);
-                    const itemMonth = (itemDate.getMonth() + 1).toString().padStart(2, '0'); // "01", "02", etc.
+                    // This filter is already applied in the initial dataForReport selection for users
+                    // if (String(item.desaKelurahan) !== String(currentUserDesa)) {
+                    //     console.log(`[generateReport-User] Skipping item ${item.uniqueId} because desa (${item.desaKelurahan}) does not match current user's desa (${currentUserDesa}).`);
+                    //     return;
+                    // }
 
                     let dosesArray = [];
                     if (Array.isArray(item.ttDosesDetails)) {
@@ -2541,32 +2693,59 @@
                         try {
                             dosesArray = JSON.parse(item.ttDosesDetails);
                         } catch (e) {
-                            console.warn("Error parsing ttDosesDetails for report aggregation:", item.ttDosesDetails, e);
+                            console.warn(`[generateReport-User] Error parsing ttDosesDetails for item ${item.uniqueId}:`, item.ttDosesDetails, e);
                         }
                     }
+                    console.log(`[generateReport-User] Processing item ${item.uniqueId}, Doses:`, dosesArray);
 
-                    // Only count doses that fall within the selected year and current user's desa
                     dosesArray.forEach((dose, index) => {
+                        // Ensure dose.date exists and is a valid date string
+                        if (!dose.date || typeof dose.date !== 'string') {
+                            console.warn(`[generateReport-User] Skipping dose due to invalid date:`, dose);
+                            return;
+                        }
                         const doseDate = new Date(dose.date);
+                        if (isNaN(doseDate.getTime())) {
+                            console.warn(`[generateReport-User] Skipping dose due to unparseable date:`, dose.date);
+                            return;
+                        }
                         const doseYear = doseDate.getFullYear().toString();
                         const doseMonth = (doseDate.getMonth() + 1).toString().padStart(2, '0');
 
-                        if (doseYear === selectedYear && aggregatedDataByMonth[doseMonth] && String(item.desaKelurahan) === String(currentUserDesa)) {
-                            const ttNumber = index + 1;
-                            if (ttNumber >= 1 && ttNumber <= 5) {
-                                if (dose.source.startsWith('Hamil anak ke-')) {
-                                    // Count doses for TTx_Bumil
-                                    aggregatedDataByMonth[doseMonth][`TT${ttNumber}_Bumil`]++;
-                                    aggregatedDataByMonth[doseMonth].totalDosesBumil++; // Sum all doses for "Ibu Hamil" column
-                                } else {
-                                    // Count doses for TTx_NonBumil
-                                    aggregatedDataByMonth[doseMonth][`TT${ttNumber}_NonBumil`]++;
-                                    aggregatedDataByMonth[doseMonth].totalDosesNonBumil++; // Sum all doses for "#Hamil" column
+                        // Apply year filter to the dose date itself
+                        if (doseYear === selectedYear) {
+                            if (aggregatedDataByMonth[doseMonth]) { // Ensure month exists in aggregation object
+                                if (dose.source.startsWith('TL')) { // Handle TL status
+                                    if (dose.source.includes('Hamil')) {
+                                        aggregatedDataByMonth[doseMonth].TL_Bumil++;
+                                        aggregatedDataByMonth[doseMonth].totalDosesBumil++;
+                                    } else {
+                                        aggregatedDataByMonth[doseMonth].TL_NonBumil++;
+                                        aggregatedDataByMonth[doseMonth].totalDosesNonBumil++;
+                                    }
+                                    console.log(`[generateReport-User] Counted TL for month ${doseMonth}. Current Bumil: ${aggregatedDataByMonth[doseMonth].TL_Bumil}, NonBumil: ${aggregatedDataByMonth[doseMonth].TL_NonBumil}`);
+                                } else { // Handle TT1-TT5
+                                    const ttNumber = index + 1;
+                                    if (ttNumber >= 1 && ttNumber <= 5) {
+                                        if (dose.source.startsWith('Hamil anak ke-')) {
+                                            aggregatedDataByMonth[doseMonth][`TT${ttNumber}_Bumil`]++;
+                                            aggregatedDataByMonth[doseMonth].totalDosesBumil++; 
+                                            console.log(`[generateReport-User] Counted TT${ttNumber}_Bumil for month ${doseMonth}. Current:`, aggregatedDataByMonth[doseMonth][`TT${ttNumber}_Bumil`]);
+                                        } else {
+                                            aggregatedDataByMonth[doseMonth][`TT${ttNumber}_NonBumil`]++;
+                                            aggregatedDataByMonth[doseMonth].totalDosesNonBumil++; 
+                                            console.log(`[generateReport-User] Counted TT${ttNumber}_NonBumil for month ${doseMonth}. Current:`, aggregatedDataByMonth[doseMonth][`TT${ttNumber}_NonBumil`]);
+                                        }
+                                    }
                                 }
+                            } else {
+                                console.warn(`[generateReport-User] Month key ${doseMonth} not found in aggregatedDataByMonth. This should not happen if all 12 months are initialized.`);
                             }
                         }
                     });
                 });
+                console.log("[generateReport-User] Aggregated data by month:", aggregatedDataByMonth);
+
 
                 let hasData = false;
                 months.forEach((monthName, index) => {
@@ -2574,14 +2753,14 @@
                     const data = aggregatedDataByMonth[monthKey];
                     const row = reportTableBody.insertRow();
                     let rowHtml = `<td class="px-2 py-1 whitespace-nowrap sticky-col">${monthName}</td>`;
-                    ttHeaders.forEach(tt => {
+                    ttHeaders.forEach(tt => { // Loop through TT1-TT5, TL
                         rowHtml += `<td class="px-2 py-1 whitespace-nowrap">${data[`${tt}_Bumil`]}</td>`;
                     });
-                    ttHeaders.forEach(tt => {
+                    ttHeaders.forEach(tt => { // Loop through TT1-TT5, TL
                         rowHtml += `<td class="px-2 py-1 whitespace-nowrap">${data[`${tt}_NonBumil`]}</td>`;
                     });
-                    rowHtml += `<td class="px-2 py-1 whitespace-nowrap">${data.totalDosesBumil}</td>`; // Display sum of doses
-                    rowHtml += `<td class="px-2 py-1 whitespace-nowrap">${data.totalDosesNonBumil}</td>`; // Display sum of doses
+                    rowHtml += `<td class="px-2 py-1 whitespace-nowrap">${data.totalDosesBumil}</td>`; 
+                    rowHtml += `<td class="px-2 py-1 whitespace-nowrap">${data.totalDosesNonBumil}</td>`; 
                     rowHtml += `<td class="px-2 py-1 whitespace-nowrap">${data.totalDosesBumil + data.totalDosesNonBumil}</td>`;
                     row.innerHTML = rowHtml;
 
@@ -2591,13 +2770,15 @@
                     grandTotals.TT3_Bumil += data.TT3_Bumil; grandTotals.TT3_NonBumil += data.TT3_NonBumil;
                     grandTotals.TT4_Bumil += data.TT4_Bumil; grandTotals.TT4_NonBumil += data.TT4_NonBumil;
                     grandTotals.TT5_Bumil += data.TT5_Bumil; grandTotals.TT5_NonBumil += data.TT5_NonBumil;
-                    grandTotals.sumIbuHamil += data.totalDosesBumil; // Sum the displayed "Ibu Hamil" values
-                    grandTotals.sumHashHamil += data.totalDosesNonBumil; // Sum the displayed "#Hamil" values
-                    grandTotals.sumTotal += (data.totalDosesBumil + data.totalDosesNonBumil); // Sum the displayed "Total" values
+                    grandTotals.TL_Bumil += data.TL_Bumil; grandTotals.TL_NonBumil += data.TL_NonBumil; // Sum TL
+                    grandTotals.sumIbuHamil += data.totalDosesBumil; 
+                    grandTotals.sumHashHamil += data.totalDosesNonBumil; 
+                    grandTotals.sumTotal += (data.totalDosesBumil + data.totalDosesNonBumil); 
 
                     if (data.TT1_Bumil > 0 || data.TT1_NonBumil > 0 || data.TT2_Bumil > 0 || data.TT2_NonBumil > 0 || 
                         data.TT3_Bumil > 0 || data.TT3_NonBumil > 0 || data.TT4_Bumil > 0 || data.TT4_NonBumil > 0 || 
-                        data.TT5_Bumil > 0 || data.TT5_NonBumil > 0 || data.totalDosesBumil > 0 || data.totalDosesNonBumil > 0) {
+                        data.TT5_Bumil > 0 || data.TT5_NonBumil > 0 || data.TL_Bumil > 0 || data.TL_NonBumil > 0 || // Check TL also
+                        data.totalDosesBumil > 0 || data.totalDosesNonBumil > 0) {
                         hasData = true;
                     }
                 });
@@ -2616,6 +2797,7 @@
                     totalRowHtml += `<td class="px-2 py-1 whitespace-nowrap">${grandTotals.sumHashHamil}</td>`;
                     totalRowHtml += `<td class="px-2 py-1 whitespace-nowrap">${grandTotals.sumTotal}</td>`;
                     totalRow.innerHTML = totalRowHtml;
+
                 } else {
                     reportTableBody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-gray-500">Tidak ada data untuk laporan ini pada tahun terpilih.</td></tr>`;
                 }
@@ -2623,11 +2805,12 @@
 
         } catch (error) {
             console.error('Error generating report:', error);
-            reportTableBody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-red-500">Gagal membuat laporan.</td></tr>`;
+            reportTableBody.innerHTML = `<tr><td colspan="17" class="text-center py-4 text-red-500">Gagal membuat laporan. Error: ${error.message}</td></tr>`;
         } finally {
             hideLoading(); // Hide loading animation
         }
     }
+
 
     // --- View Management Functions ---
 
@@ -2653,7 +2836,7 @@
         if (mainContainer) {
             // Simpan posisi scroll hanya saat meninggalkan tampilan daftar untuk formulir/laporan
             if (viewId !== 'listView') {
-                currentScrollPosition = document.getElementById('listView').scrollTop;
+                currentScrollPosition = mainContainer.scrollTop; // Use mainContainer.scrollTop
             }
             mainContainer.scrollTop = 0; // Gulir ke atas tampilan baru
         }
@@ -2675,7 +2858,7 @@
             loadAndRenderData().then(() => {
                 const dataListContainer = document.getElementById('dataList');
                 if (dataListContainer) {
-                    dataListContainer.scrollTop = currentScrollPosition; // Pulihkan scroll untuk tampilan daftar
+                    mainContainer.scrollTop = currentScrollPosition; // Pulihkan scroll untuk tampilan daftar
                 }
             });
         } else if (viewId === 'formView') {
@@ -2684,12 +2867,12 @@
             if (!itemData) {
                 console.log("[showView-formView] New entry mode. Resetting form.");
                 resetForm(); 
-                formTitle.innerText = "Skrining Imunisasi Tetanus Digital"; // Atur judul untuk entri baru
+                formTitle.innerText = "Skrining Imunisasi TT (baru)"; // Atur judul untuk entri baru
             }
             
             if (itemData) {
                 console.log("[showView-formView] Edit mode. Loading itemData:", itemData);
-                formTitle.innerText = "Riwayat Imunisasi TT"; // Atur judul untuk pengeditan
+                formTitle.innerText = "Riwayat Imunisasi TT (update)"; // Atur judul untuk pengeditan
                 
                 // Mengisi kolom formulir dengan itemData
                 document.getElementById("nama").value = itemData.nama || '';
@@ -2711,7 +2894,7 @@
                 let dosesArray = [];
                 if (Array.isArray(itemData.ttDosesDetails)) {
                     dosesArray = itemData.ttDosesDetails;
-                } else if (typeof itemData.ttDosesDetails === 'string' && itemData.ttDosesDetails.startsWith('[') && item.ttDosesDetails.endsWith(']')) {
+                } else if (typeof itemData.ttDosesDetails === 'string' && itemData.ttDosesDetails.startsWith('[') && itemData.ttDosesDetails.endsWith(']')) {
                     try {
                         dosesArray = JSON.parse(itemData.ttDosesDetails);
                         console.log("[showView-formView] Parsed ttDosesDetails:", dosesArray);
@@ -2762,7 +2945,7 @@
                     }
                 });
 
-                const hamilDoses = dosesArray.filter(d => d.source.startsWith('Hamil anak ke-'));
+                const hamilDoses = dosesArray.filter(d => d.source.startsWith('Hamil anak ke-') || d.source.startsWith('TL (Hamil anak ke-'));
                 const hamilContainer = document.getElementById("hamilContainer");
                 const initialHamilInput = hamilContainer.querySelector('input[name="hamil[]"]');
                 if (initialHamilInput) {
@@ -2793,7 +2976,7 @@
                 }
 
                 // Mengisi dosis "Lainnya"
-                const lainnyaDoses = dosesArray.filter(d => d.source.startsWith('Lainnya'));
+                const lainnyaDoses = dosesArray.filter(d => d.source.startsWith('Lainnya') || d.source.startsWith('TL (Lainnya'));
                 const lainnyaContainer = document.getElementById("lainnyaContainer");
                 const initialLainnyaDateInput = lainnyaContainer.querySelector('input[name="lainnyaDate[]"]');
                 const initialLainnyaKeteranganInput = lainnyaContainer.querySelector('textarea[name="lainnyaKeterangan[]"]');
@@ -2811,10 +2994,16 @@
                         if (index === 0) {
                             if (initialLainnyaDateInput) {
                                 initialLainnyaDateInput.value = formatDateToYYYYMMDD(dose.date);
-                                // Ekstrak keterangan dari string sumber: "Lainnya (Keterangan)"
+                                // Ekstrak keterangan dari string sumber: "Lainnya (Keterangan)" atau "TL (Lainnya (Keterangan))"
                                 const match = dose.source.match(/\((.*)\)/);
-                                if (initialLainnyaKeteranganInput && match && match[1] !== 'Tanpa Keterangan') {
-                                    initialLainnyaKeteranganInput.value = match[1];
+                                if (initialLainnyaKeteranganInput && match && match[1] && !match[1].includes('Tanpa Keterangan')) {
+                                    // If source is TL (Lainnya (Keterangan)), extract the inner part
+                                    const innerMatch = match[1].match(/\((.*)\)/);
+                                    if (innerMatch) {
+                                        initialLainnyaKeteranganInput.value = innerMatch[1];
+                                    } else {
+                                        initialLainnyaKeteranganInput.value = match[1];
+                                    }
                                 }
                                 console.log(`[showView-formView] Set initial lainnya date to ${initialLainnyaDateInput.value}, keterangan to ${initialLainnyaKeteranganInput.value}`);
                             }
@@ -2827,8 +3016,13 @@
                             if (lastNewDateInput) {
                                 lastNewDateInput.value = formatDateToYYYYMMDD(dose.date);
                                 const match = dose.source.match(/\((.*)\)/);
-                                if (lastNewKeteranganInput && match && match[1] !== 'Tanpa Keterangan') {
-                                    lastNewKeteranganInput.value = match[1];
+                                if (lastNewKeteranganInput && match && match[1] && !match[1].includes('Tanpa Keterangan')) {
+                                    const innerMatch = match[1].match(/\((.*)\)/);
+                                    if (innerMatch) {
+                                        lastNewKeteranganInput.value = innerMatch[1];
+                                    } else {
+                                        lastNewKeteranganInput.value = match[1];
+                                    }
                                 }
                                 console.log(`[showView-formView] Added and set new lainnya input to ${lastNewDateInput.value}, keterangan to ${lastNewKeteranganInput.value}`);
                             }
