@@ -488,10 +488,11 @@
     </div>
 
     <!-- Tampilan Formulir Input (Awalnya Tersembunyi) -->
-    <div id="formView" class="hidden">
-        <div class="sticky-header bg-white -mt-2 -mx-2 pt-2 pb-2 rounded-t-xl">
-            <h1 id="formTitle" class="font-bold text-2xl text-center text-blue-800 mb-2">Form Riwayat Imunisasi TT</h1>
-        </div>
+<div id="formView" class="hidden">
+    <div class="sticky-header bg-white -mt-2 -mx-2 pt-2 pb-2 rounded-t-xl relative"> <h1 id="formTitle" class="font-bold text-2xl text-center text-blue-800 mb-2">Form Riwayat Imunisasi TT</h1>
+        <button type="button" id="closeFormBtn" class="absolute top-0 right-1 text-gray-600 hover:text-gray-800 text-2xl p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300">
+            <i class="fas fa-times"></i> </button>
+    </div>
         <form>
             <section class="bg-gray-50 p-6 mb-8 rounded-lg shadow-inner border border-gray-200">
                 <h2 class="font-semibold text-xl text-gray-700 border-b-2 border-blue-200 pb-3 mt-0 mb-3 md:text-2xl">Identitas</h2>
@@ -644,29 +645,19 @@
         </form>
 
 <div class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-300 shadow-md px-3 py-2 flex items-center justify-between gap-3 max-w-4xl mx-auto">
-    
-    <!-- Tombol Simpan di kiri -->
-    <div>
-        <button type="button" id="saveDataButtonForm" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold shadow-md">
-            Simpan Data
-        </button>
-    </div>
-
     <!-- STATUS OUTPUT di tengah -->
-    <div class="flex-1 text-center">
+    <div class="flex-1 text-left">
         <div id="statusOutput" class="inline-block bg-orange-600 text-white px-3 py-1 rounded-lg font-bold shadow-md text-sm md:sm">
             <!-- Akan diisi oleh JavaScript -->
         </div>
     </div>
-
-    <!-- Tombol Tutup di kanan -->
+    <!-- Tombol Simpan di kiri -->
     <div>
-        <button type="button" id="closeFormBtn" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-semibold shadow-md">
-            Tutup
+        <button type="button" id="saveDataButtonForm" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold shadow-md">
+            Simpan
         </button>
     </div>
 </div>
-
     </div>
 
     <!-- Tampilan Laporan (Awalnya Tersembunyi) -->
@@ -782,7 +773,7 @@
     <!-- Tombol kanan: Edit dan Tutup -->
     <div class="flex gap-3">
         <button id="editFromFullModalBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">Edit</button>
-        <button onclick="closeFullDetailModal()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md">Tutup</button>
+        <button onclick="closeFullDetailModal()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md">tutup</button>
     </div>
 </div>
 
