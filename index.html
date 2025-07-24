@@ -477,7 +477,7 @@
             </div>
         </div>
         <div id="dataList" class="space-y-4">
-            <!-- Data akan dirender di sini -->
+            <!-- Data will be rendered here -->
             <p class="text-center text-gray-500" id="loadingMessage">Memuat data...</p>
         </div>
         <div id="paginationControls" class="flex justify-center items-center gap-4 mt-4">
@@ -488,11 +488,10 @@
     </div>
 
     <!-- Tampilan Formulir Input (Awalnya Tersembunyi) -->
-<div id="formView" class="hidden">
-    <div class="sticky-header bg-white -mt-2 -mx-2 pt-2 pb-2 rounded-t-xl relative"> <h1 id="formTitle" class="font-bold text-2xl text-center text-blue-800 mb-2">Form Riwayat Imunisasi TT</h1>
-        <button type="button" id="closeFormBtn" class="absolute top-0 right-1 text-gray-600 hover:text-gray-800 text-2xl p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300">
-            <i class="fas fa-times"></i> </button>
-    </div>
+    <div id="formView" class="hidden">
+        <div class="sticky-header bg-white -mt-2 -mx-2 pt-2 pb-2 rounded-t-xl">
+            <h1 id="formTitle" class="font-bold text-2xl text-center text-blue-800 mb-2">Form Riwayat Imunisasi TT</h1>
+        </div>
         <form>
             <section class="bg-gray-50 p-6 mb-8 rounded-lg shadow-inner border border-gray-200">
                 <h2 class="font-semibold text-xl text-gray-700 border-b-2 border-blue-200 pb-3 mt-0 mb-3 md:text-2xl">Identitas</h2>
@@ -645,19 +644,29 @@
         </form>
 
 <div class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-300 shadow-md px-3 py-2 flex items-center justify-between gap-3 max-w-4xl mx-auto">
-    <!-- STATUS OUTPUT di tengah -->
-    <div class="flex-1 text-left">
-        <div id="statusOutput" class="inline-block bg-orange-600 text-white px-3 py-1 rounded-lg font-bold shadow-md text-sm md:sm">
-            <!-- Akan diisi oleh JavaScript -->
-        </div>
-    </div>
+    
     <!-- Tombol Simpan di kiri -->
     <div>
         <button type="button" id="saveDataButtonForm" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold shadow-md">
             Simpan
         </button>
     </div>
+
+    <!-- STATUS OUTPUT di tengah -->
+    <div class="flex-1 text-center">
+        <div id="statusOutput" class="inline-block bg-orange-600 text-white px-3 py-1 rounded-lg font-bold shadow-md text-sm md:sm">
+            <!-- Akan diisi oleh JavaScript -->
+        </div>
+    </div>
+
+    <!-- Tombol Tutup di kanan -->
+    <div>
+        <button type="button" id="closeFormBtn" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-semibold shadow-md">
+            Tutup
+        </button>
+    </div>
 </div>
+
     </div>
 
     <!-- Tampilan Laporan (Awalnya Tersembunyi) -->
@@ -773,7 +782,7 @@
     <!-- Tombol kanan: Edit dan Tutup -->
     <div class="flex gap-3">
         <button id="editFromFullModalBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">Edit</button>
-        <button onclick="closeFullDetailModal()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md">tutup</button>
+        <button onclick="closeFullDetailModal()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md">Tutup</button>
     </div>
 </div>
 
@@ -938,6 +947,7 @@
         localStorage.removeItem('userDesa');
         localStorage.removeItem('isLoggedIn'); // Clear isLoggedIn status on logout
         localStorage.removeItem('cachedImunisasiData'); // Clear cached data on logout for privacy
+        localStorage.removeItem('offlineImunisasiData'); // Clear pending offline data on logout
         currentUserDesa = null;
         isLoggedIn = false; // Update local variable
         document.getElementById('loggedInDesa').innerText = '';
@@ -1557,7 +1567,6 @@
         } else {
             data.action = 'add';
             data.uniqueId = crypto.randomUUID(); // Generate a new uniqueId for new entries
-            data.status = 'pending-sync'; // Mark as pending sync for new entries
         }
 
         showLoading(); // Show loading animation before sending data
@@ -1565,38 +1574,51 @@
         // Cek koneksi internet
         if (navigator.onLine) {
             console.log(`[saveToSheets] Online: ${data.action === 'update' ? 'Memperbarui' : 'Mengirim'} data ke Google Sheets.`);
-            const success = await sendDataToGoogleSheets(data);
+            const success = await sendDataToGoogleSheets(data); // Pass data with action
             if (success) {
                 showCustomAlert(`Data berhasil di${data.action === 'update' ? 'perbarui' : 'simpan'} ke Google Sheets!`, window.generatedWhatsappLink);
-                resetForm(); // Reset form setelah berhasil disimpan online
-                showView('listView'); // Go back to list view
+                // After successful online save, ensure it's removed from offline queue if it was there
+                let storedOfflineData = JSON.parse(localStorage.getItem('offlineImunisasiData')) || [];
+                storedOfflineData = storedOfflineData.filter(item => String(item.uniqueId) !== String(data.uniqueId));
+                localStorage.setItem('offlineImunisasiData', JSON.stringify(storedOfflineData));
+                
+                resetForm();
+                showView('listView');
             } else {
                 console.error(`[saveToSheets] Gagal ${data.action === 'update' ? 'memperbarui' : 'menyimpan'} data ke Google Sheets. Menyimpan ke local storage.`);
-                saveDataLocally(data);
+                saveDataLocally(data); // Save with action
                 showCustomAlert(`Gagal ${data.action === 'update' ? 'memperbarui' : 'menyimpan'} data ke Google Sheets. Data disimpan sementara dan akan dikirim saat online.`, window.generatedWhatsappLink);
                 resetForm();
-                showView('listView'); // Go back to list view
+                showView('listView');
             }
         } else {
             console.log("[saveToSheets] Offline: Menyimpan data ke local storage.");
-            saveDataLocally(data);
+            saveDataLocally(data); // Save with action
             showCustomAlert("Anda sedang offline. Data disimpan sementara dan akan dikirim saat online.", window.generatedWhatsappLink);
             resetForm();
-            showView('listView'); // Go back to list view
+            showView('listView');
         }
-        hideLoading(); // Hide loading animation after operation
+        hideLoading();
+        // After any save operation (online or offline), ensure the list is refreshed
+        loadAndRenderData();
     }
 
     // Fungsi untuk mengirim data ke Google Sheets
     async function sendDataToGoogleSheets(data) {
         try {
+            const payload = { ...data }; // Copy data
+            // If it's an update or delete, ensure 'action' is passed correctly
+            if (!payload.action) { // Only set if not already set (e.g., from deleteData)
+                payload.action = 'add'; // Default to 'add' if not specified
+            }
+
             const response = await fetch(GOOGLE_SHEETS_WEB_APP_URL, {
                 method: 'POST',
                 mode: 'cors', // Use 'cors' mode to read response, ensure GAS handles CORS
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: new URLSearchParams(data).toString(),
+                body: new URLSearchParams(payload).toString(),
             });
 
             if (!response.ok) {
@@ -1643,55 +1665,73 @@
     function saveDataLocally(data) {
         let storedData = JSON.parse(localStorage.getItem('offlineImunisasiData')) || [];
         
-        // If updating, find and replace the existing item
+        // Find if an item with the same uniqueId already exists
         const existingIndex = storedData.findIndex(item => String(item.uniqueId) === String(data.uniqueId));
+
         if (existingIndex !== -1) {
-            storedData[existingIndex] = { ...data, status: 'pending-sync' }; // Update and mark for sync
+            // If exists, update it. Ensure 'action' is preserved if it's a delete action.
+            storedData[existingIndex] = { ...data, status: 'pending-sync' };
         } else {
-            storedData.push({ ...data, status: 'pending-sync' }); // Add new and mark for sync
+            // If new, add it.
+            storedData.push({ ...data, status: 'pending-sync' });
         }
         
         localStorage.setItem('offlineImunisasiData', JSON.stringify(storedData));
         console.log("[saveDataLocally] Data berhasil disimpan di local storage (pending sync):", data);
+        // After saving locally, immediately update the displayed data
+        loadAndRenderData();
     }
 
     // Fungsi untuk mencoba mengirim data yang tersimpan di local storage saat online kembali
     async function sendQueuedData() {
-        if (navigator.onLine) {
-            let storedData = JSON.parse(localStorage.getItem('offlineImunisasiData')) || [];
-            if (storedData.length > 0) {
-                console.log(`[sendQueuedData] Koneksi pulih. Mencoba mengirim ${storedData.length} data yang tersimpan.`);
-                showLoading(); // Show loading animation during queued data send
-                let successfullySentCount = 0;
-                const dataToSend = [...storedData]; // Buat salinan untuk iterasi
-                localStorage.removeItem('offlineImunisasiData'); // Kosongkan antrean sebelum mencoba kirim
-                
-                // Fetch latest data from Google Sheets to ensure accurate merging
-                const latestSheetData = await fetchDataFromGoogleSheets();
-                const latestSheetUniqueIds = new Set(latestSheetData.map(item => String(item.uniqueId)));
+        if (!navigator.onLine) {
+            console.log("[sendQueuedData] Offline. Cannot send queued data.");
+            return;
+        }
 
-                for (const data of dataToSend) {
-                    // Only send if the item isn't already synced in the latest sheet data
-                    if (!latestSheetUniqueIds.has(String(data.uniqueId))) {
-                        const success = await sendDataToGoogleSheets(data);
-                        if (success) {
-                            successfullySentCount++;
-                        } else {
-                            console.error("[sendQueuedData] Gagal mengirim satu item data dari antrean. Mengembalikan ke local storage.");
-                            saveDataLocally(data); // Jika gagal, tambahkan kembali ke local storage
-                        }
-                    } else {
-                        console.log(`[sendQueuedData] Item ${data.uniqueId} sudah ada di Google Sheets, tidak perlu dikirim ulang.`);
-                    }
-                }
+        let storedData = JSON.parse(localStorage.getItem('offlineImunisasiData')) || [];
+        if (storedData.length === 0) {
+            console.log("[sendQueuedData] No queued data to send.");
+            return;
+        }
 
-                if (successfullySentCount > 0) {
-                    showCustomAlert(`Berhasil mengirim ${successfullySentCount} data yang tertunda ke Google Sheets.`);
-                    loadAndRenderData(); // Muat ulang daftar setelah sinkronisasi
-                }
-                hideLoading(); // Hide loading animation after queued data send
+        console.log(`[sendQueuedData] Koneksi pulih. Mencoba mengirim ${storedData.length} data yang tersimpan.`);
+        showLoading();
+
+        const successfullySentItems = [];
+        const failedToSendItems = [];
+
+        for (const data of storedData) {
+            let success = false;
+            if (data.action === 'delete') {
+                success = await deleteDataFromGoogleSheets(data.uniqueId);
+            } else {
+                // For add/update, ensure the 'action' field is included in the payload
+                success = await sendDataToGoogleSheets(data);
+            }
+
+            if (success) {
+                successfullySentItems.push(data);
+            } else {
+                failedToSendItems.push(data);
             }
         }
+
+        // Update local storage with only the items that failed to send
+        localStorage.setItem('offlineImunisasiData', JSON.stringify(failedToSendItems));
+        console.log(`[sendQueuedData] Berhasil mengirim ${successfullySentItems.length} data. Gagal: ${failedToSendItems.length}.`);
+
+        if (successfullySentItems.length > 0) {
+            showCustomAlert(`Berhasil mengirim ${successfullySentItems.length} data yang tertunda ke Google Sheets.`);
+        } else if (failedToSendItems.length > 0) {
+            showCustomAlert(`Gagal mengirim ${failedToSendItems.length} data yang tertunda. Coba lagi nanti.`);
+        } else {
+            showCustomAlert("Tidak ada data tertunda untuk disinkronkan.");
+        }
+
+        // Crucially, reload all data after attempted sync to reflect latest state
+        await loadAndRenderData();
+        hideLoading();
     }
 
     // Fungsi untuk mengambil data dari Google Sheets (untuk daftar dan laporan)
@@ -1828,15 +1868,15 @@
 
             // Re-generate TT boxes for display in the list view
             let ttBoxesHtml = '';
-            let dosesArray = [];
+            let allParsedDoses = []; // This will hold all parsed doses from ttDosesDetails
             if (Array.isArray(item.ttDosesDetails)) {
-                dosesArray = item.ttDosesDetails;
+                allParsedDoses = item.ttDosesDetails;
             } else if (typeof item.ttDosesDetails === 'string') {
                 if (item.ttDosesDetails.startsWith('[') && item.ttDosesDetails.endsWith(']')) {
                     try {
                         const parsed = JSON.parse(item.ttDosesDetails);
                         if (Array.isArray(parsed)) {
-                            dosesArray = parsed;
+                            allParsedDoses = parsed;
                         }
                     } catch (e) {
                         console.warn("ttDosesDetails string did not parse to array:", item.ttDosesDetails, e);
@@ -1844,30 +1884,50 @@
                 }
             }
 
-            // Create a Set of given dose indices for quick lookup (excluding TL)
-            const givenDoses = new Set(dosesArray.filter(d => !d.source.startsWith('TL')).map((d, idx) => idx + 1));
-            const hasTL = dosesArray.some(d => d.source.startsWith('TL'));
+            // Filter out TL visits to get only T1-T5 relevant doses for coloring
+            // And ensure they are sorted by date to correctly assign T1, T2, etc.
+            const t1ToT5DosesForColoring = allParsedDoses
+                .filter(d => !d.source.startsWith('TL'))
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Create a Set of given dose *numbers* (1 for T1, 2 for T2, etc.)
+            // This set will contain {1, 2, 3, 4, 5} if all are given.
+            const givenDoseNumbers = new Set();
+            for (let i = 0; i < t1ToT5DosesForColoring.length && i < 5; i++) {
+                givenDoseNumbers.add(i + 1);
+            }
+            
+            const hasTL = allParsedDoses.some(d => d.source.startsWith('TL'));
 
             for (let i = 1; i <= 5; i++) {
                 let boxClass = 'bg-gray-200'; // Default: grey
                 let boxText = `T${i}`;
 
-                if (givenDoses.has(i)) { // Jika dosis ini sudah diberikan
+                const doseGiven = givenDoseNumbers.has(i); // Check if this specific dose (T1-T5) was given
+
+                if (doseGiven) {
                     boxClass = 'bg-green-500 text-white'; // Hijau untuk dosis yang sudah diberikan
-                } else if (item.statusTt === `T${i}`) { // If this is the current status (e.g., T3 is current, so T4 is next)
-                    // This is the next expected dose, check if it's overdue
-                    let nextScheduleDate = null;
-                    if (item.jadwalDosisBerikutnya && item.jadwalDosisBerikutnya !== "Imunisasi TT lengkap (T5)" && item.jadwalDosisBerikutnya !== "Imunisasi TT lengkap (TL)") {
-                        try {
-                            nextScheduleDate = new Date(item.jadwalDosisBerikutnya);
-                            nextScheduleDate.setHours(0, 0, 0, 0); // Reset time for comparison
-                        } catch (e) {
-                            console.error("Invalid nextScheduleDate:", item.jadwalDosisBerikutnya, e);
-                            nextScheduleDate = null;
+                } else {
+                    // This dose (T_i) has NOT been given.
+                    // Check if T_i is the *next expected* dose based on item.statusTt
+                    const currentTtStatusNum = parseInt(item.statusTt ? item.statusTt.replace('T', '') : '0');
+                    // The next expected dose is currentTtStatusNum + 1.
+                    // So, if i matches (currentTtStatusNum + 1), it's the one we're looking for.
+                    if (i === (currentTtStatusNum + 1)) { // This is the next dose that *should* be given
+                        let nextScheduleDate = null;
+                        if (item.jadwalDosisBerikutnya && item.jadwalDosisBerikutnya !== "Imunisasi TT lengkap (T5)" && item.jadwalDosisBerikutnya !== "Imunisasi TT lengkap (TL)") {
+                            try {
+                                nextScheduleDate = new Date(item.jadwalDosisBerikutnya);
+                                nextScheduleDate.setHours(0, 0, 0, 0); // Reset time for comparison
+                            } catch (e) {
+                                console.error("Invalid nextScheduleDate for yellow box check:", item.jadwalDosisBerikutnya, e);
+                                nextScheduleDate = null;
+                            }
                         }
-                    }
-                    if (nextScheduleDate && nextScheduleDate <= today) {
-                        boxClass = 'bg-yellow-500 text-white'; // Kuning jika jatuh tempo/terlambat
+                        // If there's a valid next schedule date and it's today or in the past
+                        if (nextScheduleDate && nextScheduleDate <= today) {
+                            boxClass = 'bg-yellow-500 text-white'; // Kuning jika jatuh tempo/terlambat
+                        }
                     }
                 }
                 ttBoxesHtml += `<div class="tt-box ${boxClass}">${boxText}</div>`;
@@ -1972,10 +2032,11 @@
 
         const loadingMessageElement = document.getElementById('loadingMessage');
         if (loadingMessageElement) {
-            loadingMessageElement.classList.add('hidden');
+            loadingMessageElement.classList.remove('hidden');
+            loadingMessageElement.innerText = 'Memuat data...'; // Ensure message is visible
         }
         
-        const localPendingData = JSON.parse(localStorage.getItem('offlineImunisasiData')) || []; // Data waiting to be synced
+        let localPendingData = JSON.parse(localStorage.getItem('offlineImunisasiData')) || []; // Data waiting to be synced
         let cachedSyncedData = JSON.parse(localStorage.getItem('cachedImunisasiData')) || []; // Data successfully synced from Sheets
 
         console.log("[loadAndRenderData] localPendingData (from localStorage):", localPendingData);
@@ -1983,42 +2044,51 @@
 
         let sheetData = [];
         if (navigator.onLine) {
-            // When online, fetchDataFromGoogleSheets will fetch ALL data and then cache only recent data.
-            // allImunisasiData should reflect ALL data from sheets + pending local data.
-            sheetData = await fetchDataFromGoogleSheets(); 
+            sheetData = await fetchDataFromGoogleSheets(); // This fetches ALL data and caches recent
             
-            // Deduplicate: localPendingData takes precedence over sheetData if uniqueId matches
+            // Merge sheetData and localPendingData, localPendingData takes precedence
             const combinedDataMap = new Map();
-            sheetData.forEach(item => combinedDataMap.set(String(item.uniqueId), item));
-            localPendingData.forEach(item => combinedDataMap.set(String(item.uniqueId), { ...item, status: 'pending-sync' })); // Ensure pending status is kept
+            sheetData.forEach(item => combinedDataMap.set(String(item.uniqueId), { ...item, status: 'synced' })); // Mark sheet data as synced
+            localPendingData.forEach(item => {
+                // If it's a delete action, remove it from the map if it exists
+                if (item.action === 'delete') {
+                    combinedDataMap.delete(String(item.uniqueId));
+                } else {
+                    // For add/update, overwrite/add with the local pending version
+                    combinedDataMap.set(String(item.uniqueId), { ...item, status: 'pending-sync' });
+                }
+            });
 
             allImunisasiData = Array.from(combinedDataMap.values());
-
-            // After successful sync, clear localPendingData that are now synced
-            const syncedUniqueIds = new Set(sheetData.map(item => item.uniqueId));
-            const remainingLocalPendingData = localPendingData.filter(item => !syncedUniqueIds.has(item.uniqueId));
-            localStorage.setItem('offlineImunisasiData', JSON.stringify(remainingLocalPendingData));
-            console.log("[loadAndRenderData] Online mode: Combined data from Sheets and local pending data. Remaining local pending:", remainingLocalPendingData.length);
+            console.log("[loadAndRenderData] Online mode: Combined data from Sheets and local pending data. Total items:", allImunisasiData.length);
         } else {
-            // Offline: Combine local pending data with previously cached synced data (which is already filtered to recent)
+            // Offline: Combine local pending data with previously cached synced data
             const combinedDataMap = new Map(); 
-            cachedSyncedData.forEach(item => combinedDataMap.set(String(item.uniqueId), item));
-            localPendingData.forEach(item => combinedDataMap.set(String(item.uniqueId), item)); // Overwrite if uniqueId exists
+            cachedSyncedData.forEach(item => combinedDataMap.set(String(item.uniqueId), { ...item, status: 'synced' })); // Cached data is considered synced
+            localPendingData.forEach(item => {
+                if (item.action === 'delete') {
+                    combinedDataMap.delete(String(item.uniqueId));
+                } else {
+                    combinedDataMap.set(String(item.uniqueId), { ...item, status: 'pending-sync' });
+                }
+            });
 
             allImunisasiData = Array.from(combinedDataMap.values());
-            console.log("[loadAndRenderData] Offline mode: Combined data from cached synced data and local pending data.");
+            console.log("[loadAndRenderData] Offline mode: Combined data from cached synced data and local pending data. Total items:", allImunisasiData.length);
         }
 
+        // Sort allImunisasiData by timestamp (newest first)
         allImunisasiData.sort((a, b) => {
             const timestampA = new Date(a.timestamp || 0).getTime();
             const timestampB = new Date(b.timestamp || 0).getTime();
-            return timestampB - timestampA; // Sort from newest to oldest
+            return timestampB - timestampA;
         });
         
         console.log("[loadAndRenderData] Final allImunisasiData (before filter/paginate):", allImunisasiData);
         console.log("[loadAndRenderData] Total items in allImunisasiData (before filter/paginate):", allImunisasiData.length);
 
         filterAndPaginate();
+        hideLoading(); // Hide loading after data is loaded and rendered
         console.log("[loadAndRenderData] filterAndPaginate called.");
     }
 
@@ -2231,25 +2301,35 @@
     async function deleteData(uniqueId) {
         closeConfirmationModal(); // Close the confirmation modal
 
-        if (!navigator.onLine) {
-            showCustomAlert("Anda sedang offline. Penghapusan data tidak dapat dilakukan saat offline.");
-            return;
-        }
+        const deletePayload = { uniqueId: uniqueId, action: 'delete', timestamp: new Date().toISOString() };
 
-        const success = await deleteDataFromGoogleSheets(uniqueId);
-        if (success) {
-            // Remove the item from allImunisasiData and local storage
-            allImunisasiData = allImunisasiData.filter(item => String(item.uniqueId) !== String(uniqueId));
-            let storedData = JSON.parse(localStorage.getItem('offlineImunisasiData')) || [];
-            storedData = storedData.filter(item => String(item.uniqueId) !== String(uniqueId));
-            localStorage.setItem('offlineImunisasiData', JSON.stringify(storedData));
-            
-            showCustomAlert("Data berhasil dihapus!");
-            closeFullDetailModal(); // Close the detail modal
-            loadAndRenderData(); // Reload and re-render the list
+        showLoading();
+
+        if (navigator.onLine) {
+            const success = await deleteDataFromGoogleSheets(uniqueId);
+            if (success) {
+                // Remove the item from allImunisasiData and local storage (offline queue)
+                allImunisasiData = allImunisasiData.filter(item => String(item.uniqueId) !== String(uniqueId));
+                let storedData = JSON.parse(localStorage.getItem('offlineImunisasiData')) || [];
+                storedData = storedData.filter(item => String(item.uniqueId) !== String(uniqueId)); // Remove if it was pending
+                localStorage.setItem('offlineImunisasiData', JSON.stringify(storedData));
+                
+                showCustomAlert("Data berhasil dihapus!");
+                closeFullDetailModal();
+                loadAndRenderData();
+            } else {
+                showCustomAlert("Gagal menghapus data online. Permintaan hapus disimpan secara lokal.");
+                saveDataLocally(deletePayload); // Save delete action locally
+                closeFullDetailModal();
+                loadAndRenderData();
+            }
         } else {
-            showCustomAlert("Gagal menghapus data. Silakan coba lagi.");
+            showCustomAlert("Anda sedang offline. Permintaan hapus disimpan secara lokal dan akan disinkronkan nanti.");
+            saveDataLocally(deletePayload); // Save delete action locally
+            closeFullDetailModal();
+            loadAndRenderData();
         }
+        hideLoading();
     }
 
     // --- Full Detail Modal Functions ---
@@ -3118,7 +3198,7 @@ if (dosesArray.length > 0) {
         window.addEventListener('online', () => {
             console.log('Koneksi internet pulih!');
             sendQueuedData(); // Coba kirim data yang tertunda
-            loadAndRenderData(); // Muat ulang daftar setelah online
+            // loadAndRenderData(); // Muat ulang daftar setelah online (sudah dipanggil di sendQueuedData)
             updateNetworkStatus(); // Perbarui status jaringan menjadi online
         });
 
