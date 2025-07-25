@@ -408,7 +408,7 @@
         color: #ffffff;
     }
     .total-row .sticky-col {
-        /* COBA SALAH SATU KODE WARNA DI BAWAH INI (sesuaikan dengan sticky-col di atas) */
+        /* COBA SALAH SATU KODE WARANG DI BAWAH INI (sesuaikan dengan sticky-col di atas) */
         /* background-color: #2C3E50; */
         /* background-color: #34495E; */
         /* background-color: #364F6B; */
@@ -653,10 +653,8 @@
     </div>
 
     <!-- STATUS OUTPUT di tengah -->
-    <div class="flex-1 text-center">
-        <div id="statusOutput" class="inline-block bg-orange-600 text-white px-3 py-1 rounded-lg font-bold shadow-md text-sm md:sm">
-            <!-- Akan diisi oleh JavaScript -->
-        </div>
+    <div id="statusOutput" class="flex-1 text-center bg-orange-600 text-white px-3 py-1 rounded-lg font-bold shadow-md text-sm md:sm flex flex-col justify-center items-center">
+        <!-- Akan diisi oleh JavaScript -->
     </div>
 
     <!-- Tombol Tutup di kanan -->
@@ -690,6 +688,18 @@
                 </div>
             </div>
             <!-- END: Dropdown filter bulan dan tahun dalam 1 baris -->
+
+            <!-- NEW: Download Buttons Container -->
+            <div class="flex flex-col md:flex-row justify-start items-center gap-4 mb-6 px-2">
+                <h3 class="font-semibold text-lg text-gray-700 md:mr-4">Unduh Laporan:</h3>
+                <button id="downloadRecapReportBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold shadow-md hover:bg-blue-700 transition-colors flex items-center justify-center w-full md:w-auto">
+                    <i class="fas fa-file-csv mr-2"></i> Laporan Rekapitulasi
+                </button>
+                <button id="downloadIndividualReportBtn" class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold shadow-md hover:bg-green-700 transition-colors flex items-center justify-center w-full md:w-auto">
+                    <i class="fas fa-file-alt mr-2"></i> Laporan Individu
+                </button>
+            </div>
+
         </div>
 
         <div class="overflow-x-auto shadow-md rounded-lg border border-gray-200">
@@ -807,14 +817,43 @@
     <p class="text-blue-700 text-lg font-semibold">Memuat data...</p>
 </div>
 
+<!-- Download Report Modal -->
+<div id="downloadReportModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm modal-content">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Unduh Laporan Imunisasi TT</h3>
+        <p class="text-gray-700 mb-4">Pilih bulan dan tahun untuk laporan yang akan diunduh:</p>
+        
+        <div class="flex flex-col gap-4 mb-6">
+            <div class="flex items-center gap-2">
+                <label for="downloadMonthFilter" class="text-sm font-medium text-gray-700">Bulan:</label>
+                <select id="downloadMonthFilter" class="block p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 flex-grow">
+                    <!-- Options will be populated by JS -->
+                </select>
+            </div>
+            <div class="flex items-center gap-2">
+                <label for="downloadYearFilter" class="text-sm font-medium text-gray-700">Tahun:</label>
+                <select id="downloadYearFilter" class="block p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 flex-grow">
+                    <!-- Options will be populated by JS -->
+                </select>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <button id="confirmDownloadBtn" class="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
+                <i class="fas fa-download mr-2"></i> Unduh
+            </button>
+            <button onclick="closeDownloadReportModal()" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors">Batal</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // GANTI DENGAN URL WEB APP GOOGLE SHEETS ANDA YANG BARU DARI CODE.GS!
     const GOOGLE_SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzfwL7sz99xoBeKz_GU_hnamtfKeEPVm7QyY_-MVupn-jZTwE9uLpnPebeU18Ocu96vwg/exec'; // GANTI INI!
 
     // KONFIGURASI: Berapa bulan data historis yang akan di-cache secara offline
-    // Misalnya, 6 untuk 6 bulan terakhir, 12 untuk 1 tahun terakhir.
-    // Jika Anda ingin SEMUA data di-cache secara offline, atur angka yang sangat besar (misal: 9999)
-    const OFFLINE_CACHE_DURATION_MONTHS = 12; 
+    // Jika Anda ingin SEMUA data di-cache secara offline (untuk pencarian penuh offline), atur angka yang sangat besar (misal: 9999)
+    const OFFLINE_CACHE_DURATION_MONTHS = 9999; 
 
     let currentUserDesa = localStorage.getItem('userDesa') || null;
     let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'; // New flag for offline login
@@ -980,6 +1019,21 @@
     let filteredData = []; // Data after applying name/NIK filter
 
     // --- Utility Functions ---
+
+    // Fungsi untuk membersihkan field CSV (menangani koma dan tanda kutip)
+    function sanitizeCsvField(field) {
+        if (field === null || field === undefined) {
+            return '';
+        }
+        let stringField = String(field);
+        // Escape double quotes with another double quote
+        stringField = stringField.replace(/"/g, '""');
+        // If the field contains comma, double quote, or newline, enclose it in double quotes
+        if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
+            return `"${stringField}"`;
+        }
+        return stringField;
+    }
 
     // Fungsi untuk menampilkan animasi loading
     function showLoading() {
@@ -1417,18 +1471,15 @@
             const nextDoseDate = new Date();
             nextDoseScheduleForDisplay = nextDoseDate.toLocaleDateString("id-ID", optionsLong);
             nextDoseScheduleForStorage = nextDoseDate.toISOString().split('T')[0]; // YYYY-MM-DD
-            output.innerHTML = "<strong>Status TT: T0</strong>";
-            output.innerHTML += "<br>Jadwal dosis berikutnya: <strong>" + nextDoseScheduleForDisplay + "</strong>";
+            output.innerHTML = `<span>Status: T0</span><span>Jadwal: ${nextDoseScheduleForDisplay}</span>`;
         } else {
             // If T5 is achieved AND this is a TL visit (current tanggalLayanan is a TL entry)
             if (statusT === 5 && isCurrentVisitTL) {
                 displayStatusTt = "TL"; // Set status to TL
-                nextDoseScheduleForDisplay = "Imunisasi TT lengkap (TL)";
+                nextDoseScheduleForDisplay = "Lengkap (TL)";
                 nextDoseScheduleForStorage = "Imunisasi TT lengkap (TL)";
-                output.innerHTML = "<strong>Status TT: TL</strong>"; // Display TL
-                output.innerHTML += "<br><em>" + nextDoseScheduleForDisplay + "</em>";
+                output.innerHTML = `<span>Status: TL</span><span>Jadwal: ${nextDoseScheduleForDisplay}</span>`; // Display TL
             } else { // Normal T1-T5 calculation or T5 without a new TL visit
-                output.innerHTML = "<strong>Status TT: T" + statusT + "</strong>";
                 if (statusT < 5) {
                     const terakhir = validDoses[validDoses.length - 1].date;
                     const next = new Date(terakhir);
@@ -1439,11 +1490,11 @@
                     
                     nextDoseScheduleForDisplay = next.toLocaleDateString("id-ID", optionsLong);
                     nextDoseScheduleForStorage = next.toISOString().split('T')[0]; // YYYY-MM-DD
-                    output.innerHTML += "<br>Jadwal dosis berikutnya: <strong>" + nextDoseScheduleForDisplay + "</strong>";
+                    output.innerHTML = `<span>Status: T${statusT}</span><span>Jadwal: ${nextDoseScheduleForDisplay}</span>`;
                 } else { // statusT === 5, but not a new TL visit
-                    nextDoseScheduleForDisplay = "Imunisasi TT lengkap (T5)";
+                    nextDoseScheduleForDisplay = "Lengkap (T5)";
                     nextDoseScheduleForStorage = "Imunisasi TT lengkap (T5)"; // Store as string
-                    output.innerHTML += "<br><em>" + nextDoseScheduleForDisplay + "</em>";
+                    output.innerHTML = `<span>Status: T5</span><span>Jadwal: ${nextDoseScheduleForDisplay}</span>`;
                 }
             }
         }
@@ -1501,7 +1552,7 @@
             } else if (statusT < 5) {
                 messageParts.push(`- *Status TT* saat ini adalah *T${statusT}* ✨`);
                 messageParts.push(`- *Jadwal imunisasi berikutnya* adalah *${nextDoseScheduleForDisplay}* 🗓️`); // Use display format for WhatsApp
-            } else { // statusT === 5, but not a TL visit (e.g., first time reaching T5)
+            } else { // statusT === 5, but not a new TL visit
                 messageParts.push(`- *Status imunisasi TT* Anda sudah *lengkap (T5)*. 🎉`);
             }
             
@@ -1569,7 +1620,7 @@
             data.uniqueId = crypto.randomUUID(); // Generate a new uniqueId for new entries
         }
 
-        showLoading(); // Show loading animation before sending data
+        showLoading(); // Show loading animation during data sending
 
         // Cek koneksi internet
         if (navigator.onLine) {
@@ -1762,6 +1813,10 @@
             cacheCutoffDate.setHours(0, 0, 0, 0); // Reset time for accurate date comparison
 
             const dataToCacheLocally = processedData.filter(item => {
+                // If OFFLINE_CACHE_DURATION_MONTHS is very large, this effectively caches all.
+                // Otherwise, it filters by date.
+                if (OFFLINE_CACHE_DURATION_MONTHS === 9999) return true; // Cache all if set to max
+                
                 if (item.tanggalLayanan) {
                     const itemDate = new Date(item.tanggalLayanan);
                     itemDate.setHours(0, 0, 0, 0); // Reset time for comparison
@@ -1819,9 +1874,11 @@
                 statusTextColorClass = 'text-purple-700'; // Purple for TL
             } else { // For T0-T4, check for overdue
                 const currentTtStatusNum = parseInt(currentTtStatus.replace('T', ''));
-                if (currentTtStatusNum < 5) {
+                // Only apply yellow if the current status (e.g., T3) is the one we're checking for
+                // and it's not T5 or TL.
+                if (currentTtStatusNum >= 0 && currentTtStatusNum < 5) {
                     let nextScheduleDate = null;
-                    if (item.jadwalDosisBerikutnya && item.jadwalDosisBerikutnya !== "Imunisasi TT lengkap (T5)") {
+                    if (item.jadwalDosisBerikutnya && item.jadwalDosisBerikutnya !== "Imunisasi TT lengkap (T5)" && item.jadwalDosisBerikutnya !== "Imunisasi TT lengkap (TL)") {
                         try {
                             nextScheduleDate = new Date(item.jadwalDosisBerikutnya);
                             nextScheduleDate.setHours(0, 0, 0, 0); // Reset time for comparison
@@ -1920,7 +1977,7 @@
                                 nextScheduleDate = new Date(item.jadwalDosisBerikutnya);
                                 nextScheduleDate.setHours(0, 0, 0, 0); // Reset time for comparison
                             } catch (e) {
-                                console.error("Invalid nextScheduleDate for yellow box check:", item.jadwalDosisBerikutnya, e);
+                                console.error("Invalid nextScheduleDate:", item.jadwalDosisBerikutnya, e);
                                 nextScheduleDate = null;
                             }
                         }
@@ -2087,7 +2144,7 @@
         console.log("[loadAndRenderData] Final allImunisasiData (before filter/paginate):", allImunisasiData);
         console.log("[loadAndRenderData] Total items in allImunisasiData (before filter/paginate):", allImunisasiData.length);
 
-        filterAndPaginate();
+        filterAndPaginate(); // Call filterAndPaginate without parameters, it will handle default 1-year filter
         hideLoading(); // Hide loading after data is loaded and rendered
         console.log("[loadAndRenderData] filterAndPaginate called.");
     }
@@ -2096,25 +2153,43 @@
     function filterAndPaginate() {
         console.log("[filterAndPaginate] Called.");
         const filterText = document.getElementById('nameNikFilter').value.toLowerCase();
-        let tempFilteredData = [];
+        let dataToConsider = [...allImunisasiData]; // Start with all data
 
-        if (currentUserDesa === "AdminPuskesmas") {
-            tempFilteredData = allImunisasiData.filter(item => 
+        // 1. Apply user's desa filter (always)
+        if (currentUserDesa !== "AdminPuskesmas") {
+            dataToConsider = dataToConsider.filter(item => String(item.desaKelurahan) === String(currentUserDesa));
+        }
+
+        // 2. Apply name/NIK filter (always, if present)
+        if (filterText) {
+            dataToConsider = dataToConsider.filter(item => 
                 (String(item.nama || '').toLowerCase().includes(filterText)) || 
                 (String(item.nik || '').toLowerCase().includes(filterText))
             );
-            console.log("[filterAndPaginate] Admin mode. Filtered by name/NIK. Initial count:", allImunisasiData.length, "Filtered count:", tempFilteredData.length);
         } else {
-            // Filter by current user's desa and then by name/NIK
-            tempFilteredData = allImunisasiData.filter(item => 
-                String(item.desaKelurahan) === String(currentUserDesa) && // Ensure string comparison
-                ((String(item.nama || '').toLowerCase().includes(filterText)) || 
-                 (String(item.nik || '').toLowerCase().includes(filterText)))
-            );
-            console.log(`[filterAndPaginate] User mode (${currentUserDesa}). Filtered by desa and name/NIK. Initial count: ${allImunisasiData.length}, Filtered count: ${tempFilteredData.length}`);
+            // 3. Apply default 1-year date filter ONLY IF filterText is empty (i.e., default list view)
+            const oneYearAgo = new Date();
+            oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+            oneYearAgo.setHours(0, 0, 0, 0);
+
+            dataToConsider = dataToConsider.filter(item => {
+                if (item.tanggalLayanan) {
+                    const itemDate = new Date(item.tanggalLayanan);
+                    itemDate.setHours(0, 0, 0, 0);
+                    return itemDate >= oneYearAgo;
+                }
+                return false;
+            });
         }
 
-        filteredData = tempFilteredData; // Update global filteredData
+        // Sort by timestamp (newest first)
+        dataToConsider.sort((a, b) => {
+            const timestampA = new Date(a.timestamp || 0).getTime();
+            const timestampB = new Date(b.timestamp || 0).getTime();
+            return timestampB - timestampA;
+        });
+
+        filteredData = dataToConsider; // Update global filteredData
 
         const totalPages = Math.ceil(filteredData.length / itemsPerPage);
         if (currentPage > totalPages && totalPages > 0) {
@@ -2464,12 +2539,16 @@ if (dosesArray.length > 0) {
     function populateFilters() {
         const monthFilter = document.getElementById('monthFilter');
         const yearFilter = document.getElementById('yearFilter');
+        const downloadMonthFilter = document.getElementById('downloadMonthFilter'); // New: for download modal
+        const downloadYearFilter = document.getElementById('downloadYearFilter');   // New: for download modal
         const monthFilterContainer = document.getElementById('monthFilterContainer');
-        const yearFilterContainer = document.getElementById('yearFilterContainer'); // New ID for year filter container
+        const yearFilterContainer = document.getElementById('yearFilterContainer'); 
 
-        // Clear existing options
+        // Clear existing options for all filters
         monthFilter.innerHTML = '';
         yearFilter.innerHTML = '';
+        downloadMonthFilter.innerHTML = ''; // Clear for download modal
+        downloadYearFilter.innerHTML = '';   // Clear for download modal
 
         // Populate years for the last 5 years up to current year + 1
         const currentYear = new Date().getFullYear();
@@ -2478,30 +2557,40 @@ if (dosesArray.length > 0) {
             option.value = year;
             option.textContent = year;
             yearFilter.appendChild(option);
+            downloadYearFilter.appendChild(option.cloneNode(true)); // Clone for download modal
         }
-        // Set current year as default
+        // Set current year as default for both
         yearFilter.value = currentYear;
+        downloadYearFilter.value = currentYear;
+
+        // --- START OF MOVED CODE ---
+        monthFilter.innerHTML = '<option value="">Semua Bulan</option>';
+        downloadMonthFilter.innerHTML = '<option value="">Semua Bulan</option>'; // For download modal
+        const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        months.forEach((month, index) => {
+            const option = document.createElement('option');
+            option.value = (index + 1).toString().padStart(2, '0');
+            option.textContent = month;
+            monthFilter.appendChild(option);
+            downloadMonthFilter.appendChild(option.cloneNode(true)); // Clone for download modal
+        });
+        const currentMonth = (new Date().getMonth() + 1).toString().padStart(2, '0');
+        monthFilter.value = currentMonth;
+        downloadMonthFilter.value = currentMonth;
+        // --- END OF MOVED CODE ---
 
         if (currentUserDesa === "AdminPuskesmas") {
-            // Admin: Show month filter and year filter
+            // Admin: Show month filter and year filter for both report and download
             monthFilterContainer.classList.remove('hidden');
-            yearFilterContainer.classList.remove('hidden'); // Ensure year filter is also visible for admin
-
-            monthFilter.innerHTML = '<option value="">Semua Bulan</option>';
-            const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-            months.forEach((month, index) => {
-                const option = document.createElement('option');
-                option.value = (index + 1).toString().padStart(2, '0');
-                option.textContent = month;
-                monthFilter.appendChild(option);
-            });
-            const currentMonth = (new Date().getMonth() + 1).toString().padStart(2, '0');
-            monthFilter.value = currentMonth;
+            yearFilterContainer.classList.remove('hidden'); 
 
         } else {
-            // User: Hide month filter, show only year filter
+            // User: Hide month filter, show only year filter for both report and download
             monthFilterContainer.classList.add('hidden');
             yearFilterContainer.classList.remove('hidden');
+            // For download modal, ensure month filter is ALWAYS visible, regardless of user type
+            downloadMonthFilter.classList.remove('hidden'); 
+            downloadMonthFilter.previousElementSibling.classList.remove('hidden'); // Show its label too
         }
     }
 
@@ -2617,27 +2706,27 @@ if (dosesArray.length > 0) {
                         };
                     }
 
-                    let dosesArray = [];
+                    let itemDoses = [];
                     if (Array.isArray(item.ttDosesDetails)) {
-                        dosesArray = item.ttDosesDetails;
+                        itemDoses = item.ttDosesDetails;
                     } else if (typeof item.ttDosesDetails === 'string' && item.ttDosesDetails.startsWith('[') && item.ttDosesDetails.endsWith(']')) {
                         try {
-                            dosesArray = JSON.parse(item.ttDosesDetails);
+                            itemDoses = JSON.parse(item.ttDosesDetails);
                         } catch (e) {
                             console.warn(`[generateReport-Admin] Error parsing ttDosesDetails for item ${item.uniqueId}:`, item.ttDosesDetails, e);
                         }
                     }
-                    console.log(`[generateReport-Admin] Processing item ${item.uniqueId}, Desa: ${desa}, Doses:`, dosesArray);
+                    console.log(`[generateReport-Admin] Processing item ${item.uniqueId}, Desa: ${desa}, Doses:`, itemDoses);
 
-                    dosesArray.forEach((dose, index) => {
+                    itemDoses.forEach((doseEntry, doseIndex) => {
                         // Ensure dose.date exists and is a valid date string
-                        if (!dose.date || typeof dose.date !== 'string') {
-                            console.warn(`[generateReport-Admin] Skipping dose due to invalid date:`, dose);
+                        if (!doseEntry.date || typeof doseEntry.date !== 'string') {
+                            console.warn(`[generateReport-Admin] Skipping dose due to invalid date:`, doseEntry);
                             return;
                         }
-                        const doseDate = new Date(dose.date);
+                        const doseDate = new Date(doseEntry.date);
                         if (isNaN(doseDate.getTime())) {
-                            console.warn(`[generateReport-Admin] Skipping dose due to unparseable date:`, dose.date);
+                            console.warn(`[generateReport-Admin] Skipping dose due to unparseable date:`, doseEntry.date);
                             return;
                         }
                         const doseMonth = (doseDate.getMonth() + 1).toString().padStart(2, '0');
@@ -2649,30 +2738,32 @@ if (dosesArray.length > 0) {
                             (!selectedYear || doseYear === selectedYear);
 
                         if (isDoseInSelectedPeriod) {
-                            if (dose.source.startsWith('TL')) { // Handle TL status
-                                if (dose.source.includes('Hamil')) { // Check if TL is for a pregnant woman
+                            const isBumilDose = doseEntry.source.includes('Hamil');
+                            const isCatinLainnyaDose = doseEntry.source.includes('Catin') || doseEntry.source.includes('Lainnya');
+                            // const isBayiSekolahDose = doseEntry.source.includes('DPT') || doseEntry.source.includes('Kelas'); // Not needed for report counting
+
+                            if (doseEntry.source.startsWith('TL')) { // Handle TL status
+                                if (isBumilDose) { // Check if TL is for a pregnant woman
                                     aggregatedDataByDesa[desa].TL_Bumil++;
                                     aggregatedDataByDesa[desa].totalDosesBumil++; // Include TL in total Bumil count
-                                } else {
+                                } else if (isCatinLainnyaDose) { // Only Catin/Lainnya for #BUMIL TL
                                     aggregatedDataByDesa[desa].TL_NonBumil++;
-                                    aggregatedDataByDesa[desa].totalDosesNonBumil++; // Include TL in total NonBumil count
+                                    aggregatedDataByDesa[desa].totalDosesNonBumil++;
                                 }
                                 console.log(`[generateReport-Admin] Counted TL for ${desa}. Current Bumil: ${aggregatedDataByDesa[desa].TL_Bumil}, NonBumil: ${aggregatedDataByDesa[desa].TL_NonBumil}`);
-                            } else { // Handle TT1-TT5
-                                // Only count if the item's statusTt is not TL, or if it's a T5 and this is the 5th dose.
-                                // This prevents double-counting T5 if a TL entry exists for the same item.
-                                // The report counts based on the dose itself, not the item's overall status.
-                                const ttNumber = index + 1; // TT1, TT2, etc. based on array index
+                            } else { // Handle TT1-T5 doses
+                                const ttNumber = doseIndex + 1; // Assuming itemDoses is already the sequence of TT1, TT2, etc.
                                 if (ttNumber >= 1 && ttNumber <= 5) {
-                                    if (dose.source.startsWith('Hamil anak ke-')) {
+                                    if (isBumilDose) {
                                         aggregatedDataByDesa[desa][`TT${ttNumber}_Bumil`]++;
                                         aggregatedDataByDesa[desa].totalDosesBumil++; 
                                         console.log(`[generateReport-Admin] Counted TT${ttNumber}_Bumil for ${desa}. Current:`, aggregatedDataByDesa[desa][`TT${ttNumber}_Bumil`]);
-                                    } else {
+                                    } else if (isCatinLainnyaDose) { // Only Catin/Lainnya for #BUMIL TT1-TT5
                                         aggregatedDataByDesa[desa][`TT${ttNumber}_NonBumil`]++;
                                         aggregatedDataByDesa[desa].totalDosesNonBumil++; 
                                         console.log(`[generateReport-Admin] Counted TT${ttNumber}_NonBumil for ${desa}. Current:`, aggregatedDataByDesa[desa][`TT${ttNumber}_NonBumil`]);
                                     }
+                                    // Bayi/Sekolah doses are explicitly NOT counted in the report here for #BUMIL.
                                 }
                             }
                         }
@@ -2757,27 +2848,27 @@ if (dosesArray.length > 0) {
                     //     return;
                     // }
 
-                    let dosesArray = [];
+                    let itemDoses = [];
                     if (Array.isArray(item.ttDosesDetails)) {
-                        dosesArray = item.ttDosesDetails;
+                        itemDoses = item.ttDosesDetails;
                     } else if (typeof item.ttDosesDetails === 'string' && item.ttDosesDetails.startsWith('[') && item.ttDosesDetails.endsWith(']')) {
                         try {
-                            dosesArray = JSON.parse(item.ttDosesDetails);
+                            itemDoses = JSON.parse(item.ttDosesDetails);
                         } catch (e) {
                             console.warn(`[generateReport-User] Error parsing ttDosesDetails for item ${item.uniqueId}:`, item.ttDosesDetails, e);
                         }
                     }
-                    console.log(`[generateReport-User] Processing item ${item.uniqueId}, Doses:`, dosesArray);
+                    console.log(`[generateReport-User] Processing item ${item.uniqueId}, Doses:`, itemDoses);
 
-                    dosesArray.forEach((dose, index) => {
+                    itemDoses.forEach((doseEntry, doseIndex) => {
                         // Ensure dose.date exists and is a valid date string
-                        if (!dose.date || typeof dose.date !== 'string') {
-                            console.warn(`[generateReport-User] Skipping dose due to invalid date:`, dose);
+                        if (!doseEntry.date || typeof doseEntry.date !== 'string') {
+                            console.warn(`[generateReport-User] Skipping dose due to invalid date:`, doseEntry);
                             return;
                         }
-                        const doseDate = new Date(dose.date);
+                        const doseDate = new Date(doseEntry.date);
                         if (isNaN(doseDate.getTime())) {
-                            console.warn(`[generateReport-User] Skipping dose due to unparseable date:`, dose.date);
+                            console.warn(`[generateReport-User] Skipping dose due to unparseable date:`, doseEntry.date);
                             return;
                         }
                         const doseYear = doseDate.getFullYear().toString();
@@ -2786,27 +2877,31 @@ if (dosesArray.length > 0) {
                         // Apply year filter to the dose date itself
                         if (doseYear === selectedYear) {
                             if (aggregatedDataByMonth[doseMonth]) { // Ensure month exists in aggregation object
-                                if (dose.source.startsWith('TL')) { // Handle TL status
-                                    if (dose.source.includes('Hamil')) {
+                                const isBumilDose = doseEntry.source.includes('Hamil');
+                                const isCatinLainnyaDose = doseEntry.source.includes('Catin') || doseEntry.source.includes('Lainnya');
+
+                                if (doseEntry.source.startsWith('TL')) { // Handle TL status
+                                    if (isBumilDose) {
                                         aggregatedDataByMonth[doseMonth].TL_Bumil++;
                                         aggregatedDataByMonth[doseMonth].totalDosesBumil++;
-                                    } else {
+                                    } else if (isCatinLainnyaDose) { // Only Catin/Lainnya for #BUMIL TL
                                         aggregatedDataByMonth[doseMonth].TL_NonBumil++;
                                         aggregatedDataByMonth[doseMonth].totalDosesNonBumil++;
                                     }
                                     console.log(`[generateReport-User] Counted TL for month ${doseMonth}. Current Bumil: ${aggregatedDataByMonth[doseMonth].TL_Bumil}, NonBumil: ${aggregatedDataByMonth[doseMonth].TL_NonBumil}`);
                                 } else { // Handle TT1-TT5
-                                    const ttNumber = index + 1;
+                                    const ttNumber = doseIndex + 1;
                                     if (ttNumber >= 1 && ttNumber <= 5) {
-                                        if (dose.source.startsWith('Hamil anak ke-')) {
+                                        if (isBumilDose) {
                                             aggregatedDataByMonth[doseMonth][`TT${ttNumber}_Bumil`]++;
                                             aggregatedDataByMonth[doseMonth].totalDosesBumil++; 
                                             console.log(`[generateReport-User] Counted TT${ttNumber}_Bumil for month ${doseMonth}. Current:`, aggregatedDataByMonth[doseMonth][`TT${ttNumber}_Bumil`]);
-                                        } else {
+                                        } else if (isCatinLainnyaDose) { // Only Catin/Lainnya for #BUMIL TT1-TT5
                                             aggregatedDataByMonth[doseMonth][`TT${ttNumber}_NonBumil`]++;
                                             aggregatedDataByMonth[doseMonth].totalDosesNonBumil++; 
                                             console.log(`[generateReport-User] Counted TT${ttNumber}_NonBumil for month ${doseMonth}. Current:`, aggregatedDataByMonth[doseMonth][`TT${ttNumber}_NonBumil`]);
                                         }
+                                        // Bayi/Sekolah doses are explicitly NOT counted in the report here for #BUMIL.
                                     }
                                 }
                             } else {
@@ -2882,6 +2977,208 @@ if (dosesArray.length > 0) {
         }
     }
 
+    // NEW: Function to show the download report modal
+    function showDownloadReportModal() {
+        const downloadModal = document.getElementById('downloadReportModal');
+        const downloadMonthFilter = document.getElementById('downloadMonthFilter');
+        const downloadYearFilter = document.getElementById('downloadYearFilter');
+
+        // Pre-fill the download modal filters with current report filters
+        downloadMonthFilter.value = document.getElementById('monthFilter').value;
+        downloadYearFilter.value = document.getElementById('yearFilter').value;
+
+        // Ensure month filter visibility matches report filter for non-admin users
+        // THIS IS THE LINE THAT WAS MODIFIED TO ALWAYS SHOW MONTH FILTER IN DOWNLOAD MODAL
+        downloadMonthFilter.classList.remove('hidden'); 
+        downloadMonthFilter.previousElementSibling.classList.remove('hidden'); // Show its label too
+
+
+        downloadModal.classList.remove('hidden');
+    }
+
+    // NEW: Function to close the download report modal
+    function closeDownloadReportModal() {
+        document.getElementById('downloadReportModal').classList.add('hidden');
+    }
+
+    // NEW: Function to download the currently displayed recap table as CSV
+    function downloadRecapReportCsv() {
+        console.time('downloadRecapReportCsv'); // Start timer
+        showLoading();
+        const table = document.getElementById('reportTable');
+        if (!table) {
+            showCustomAlert('Tabel laporan tidak ditemukan.');
+            hideLoading();
+            console.timeEnd('downloadRecapReportCsv'); // End timer
+            return;
+        }
+
+        let csvContent = '';
+        const headers = [];
+        const headerRows = table.querySelectorAll('thead tr');
+        console.log('Header rows found:', headerRows.length);
+
+        // Construct the flattened header row for CSV
+        if (headerRows.length === 2) {
+            const topHeaders = Array.from(headerRows[0].querySelectorAll('th'));
+            const bottomHeaders = Array.from(headerRows[1].querySelectorAll('th'));
+            console.log('Top headers (text content):', topHeaders.map(th => th.textContent.trim()));
+            console.log('Bottom headers (text content):', bottomHeaders.map(th => th.textContent.trim()));
+
+            // Handle the first column (Desa/Bulan)
+            headers.push(sanitizeCsvField(topHeaders[0].textContent.trim()));
+            let bottomHeaderColIndex = 0; // This index tracks position in bottomHeaders array
+
+            // Iterate through the top-level headers (excluding the first rowspan one)
+            for (let i = 1; i < topHeaders.length; i++) {
+                const th = topHeaders[i];
+                const colspan = parseInt(th.getAttribute('colspan') || '1');
+                const groupName = th.textContent.trim();
+                console.log(`Processing top header: "${groupName}" with colspan: ${colspan}. Current bottomHeaderColIndex: ${bottomHeaderColIndex}`);
+
+                for (let j = 0; j < colspan; j++) {
+                    const bottomHeaderCell = bottomHeaders[bottomHeaderColIndex];
+                    if (bottomHeaderCell) {
+                        headers.push(sanitizeCsvField(`${groupName} ${bottomHeaderCell.textContent.trim()}`));
+                    } else {
+                        // This else block indicates an issue with expected number of bottom headers
+                        console.warn(`Bottom header cell at index ${bottomHeaderColIndex} not found or empty for group "${groupName}".`);
+                        headers.push(sanitizeCsvField(`${groupName} Col${j+1}`));
+                    }
+                    bottomHeaderColIndex++;
+                }
+            }
+        } else {
+            // Fallback for simpler header if structure changes
+            Array.from(table.querySelectorAll('thead th')).forEach(th => {
+                headers.push(sanitizeCsvField(th.textContent.trim()));
+            });
+            console.log('Using simpler header extraction.');
+        }
+
+        console.log('Generated CSV Headers:', headers);
+        csvContent += headers.join(',') + '\n';
+
+        // Get table body rows
+        const bodyRows = table.querySelectorAll('tbody tr');
+        console.log('Body rows found:', bodyRows.length);
+
+        // Check if only headers are present or no data rows
+        if (bodyRows.length === 0 || (bodyRows.length === 1 && bodyRows[0].querySelector('td[colspan="17"]'))) {
+            showCustomAlert('Tidak ada data untuk diunduh dalam laporan rekapitulasi.');
+            hideLoading();
+            console.timeEnd('downloadRecapReportCsv'); // End timer
+            return;
+        }
+
+        bodyRows.forEach((row, rowIndex) => {
+            // Skip the "Tidak ada data..." row if it's there
+            if (row.querySelector('td[colspan="17"]')) {
+                console.log(`Skipping placeholder row at index ${rowIndex}`);
+                return;
+            }
+
+            const rowData = [];
+            Array.from(row.querySelectorAll('td, th')).forEach(cell => { // Include th for the TOTAL row
+                rowData.push(sanitizeCsvField(cell.textContent.trim()));
+            });
+            csvContent += rowData.join(',') + '\n';
+        });
+
+        console.log('CSV Content generated. Length:', csvContent.length);
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        const selectedMonth = document.getElementById('monthFilter').value;
+        const selectedYear = document.getElementById('yearFilter').value;
+        const currentDesa = currentUserDesa;
+
+        const monthName = selectedMonth ? new Date(2000, parseInt(selectedMonth) - 1, 1).toLocaleDateString('id-ID', { month: 'long' }) : 'SemuaBulan';
+        let filename = `Laporan_Rekapitulasi_Imunisasi_TT`;
+        if (currentUserDesa === "AdminPuskesmas") {
+            filename += `_${monthName}_${selectedYear}.csv`;
+        } else {
+            filename += `_${monthName}_${selectedYear}_${currentDesa}.csv`;
+        }
+
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showCustomAlert('Laporan Rekapitulasi berhasil diunduh!');
+        hideLoading();
+        console.timeEnd('downloadRecapReportCsv'); // End timer
+    }
+
+    // NEW: Function to download the CSV report (now for individual data)
+    async function downloadIndividualReportCsv() {
+        closeDownloadReportModal(); // Close the modal immediately
+        showLoading(); // Show loading overlay for the download process
+
+        const selectedMonth = document.getElementById('downloadMonthFilter').value;
+        const selectedYear = document.getElementById('downloadYearFilter').value;
+        const currentDesa = currentUserDesa; // Get the logged-in user's desa
+
+        console.log(`[downloadIndividualReportCsv] Attempting to download report for Month: ${selectedMonth}, Year: ${selectedYear}, Desa: ${currentDesa}`);
+
+        try {
+            const payload = {
+                action: 'downloadDetailedReport', // This action requests detailed report from GAS
+                month: selectedMonth,
+                year: selectedYear,
+                desa: currentDesa // Send the user's desa for server-side filtering
+            };
+
+            const response = await fetch(GOOGLE_SHEETS_WEB_APP_URL, {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams(payload).toString(),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}. Message: ${errorText}`);
+            }
+
+            const csvData = await response.text();
+            
+            if (!csvData || csvData.trim() === '' || csvData.trim() === 'Tidak ada data untuk laporan ini pada bulan, tahun, dan desa terpilih.') {
+                showCustomAlert('Tidak ada data untuk laporan pada bulan dan tahun terpilih.');
+                return;
+            }
+
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            const monthName = selectedMonth ? new Date(2000, parseInt(selectedMonth) - 1, 1).toLocaleDateString('id-ID', { month: 'long' }) : 'SemuaBulan';
+            // Updated filename for detailed report
+            const filename = `Laporan_Individu_Imunisasi_TT_${monthName}_${selectedYear}_${currentDesa}.csv`;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showCustomAlert('Laporan Individu berhasil diunduh!');
+
+        } catch (error) {
+            console.error('[downloadIndividualReportCsv] Error downloading report:', error);
+            showCustomAlert(`Gagal mengunduh laporan. Error: ${error.message}.`);
+        } finally {
+            hideLoading(); // Hide loading overlay after download attempt
+        }
+    }
+
 
     // --- View Management Functions ---
 
@@ -2926,12 +3223,7 @@ if (dosesArray.length > 0) {
         if (viewId === 'listView') {
             document.getElementById('nameNikFilter').value = ''; // Bersihkan filter saat kembali ke tampilan daftar
             currentPage = 1; // Atur ulang ke halaman pertama pada filter baru
-            loadAndRenderData().then(() => {
-                const dataListContainer = document.getElementById('dataList');
-                if (dataListContainer) {
-                    mainContainer.scrollTop = currentScrollPosition; // Pulihkan scroll untuk tampilan daftar
-                }
-            });
+            filterAndPaginate(); // Call filterAndPaginate without parameters, it will handle default 1-year filter
         } else if (viewId === 'formView') {
             const formTitle = document.getElementById('formTitle');
             // HANYA reset form jika ini adalah entri baru (itemData adalah null)
@@ -3138,10 +3430,17 @@ if (dosesArray.length > 0) {
         document.getElementById('monthFilter').addEventListener('change', generateReport);
         document.getElementById('yearFilter').addEventListener('change', generateReport);
         
+        // NEW: Event listener for the download report buttons
+        document.getElementById('downloadRecapReportBtn').addEventListener('click', downloadRecapReportCsv);
+        document.getElementById('downloadIndividualReportBtn').addEventListener('click', showDownloadReportModal);
+        // NEW: Event listener for the confirm download button inside the modal
+        document.getElementById('confirmDownloadBtn').addEventListener('click', downloadIndividualReportCsv);
+
+
         // Event listener untuk filter nama/NIK
         document.getElementById('nameNikFilter').addEventListener('input', () => {
             currentPage = 1; // Reset ke halaman pertama pada filter baru
-            filterAndPaginate();
+            filterAndPaginate(); // Call filterAndPaginate without parameters, it will handle default 1-year filter
         });
 
         // Event listeners untuk tombol paginasi
